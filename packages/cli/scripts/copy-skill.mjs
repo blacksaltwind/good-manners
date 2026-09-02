@@ -135,6 +135,29 @@ await fs.copyFile(
   claudeSessionStateDestination,
 )
 
+
+const codexTurnStartDestination = path.join(
+  destination,
+  'scripts',
+  'codex-turn-start.mjs',
+)
+
+const codexStopDestination = path.join(
+  destination,
+  'scripts',
+  'codex-stop.mjs',
+)
+
+await fs.copyFile(
+  claudeTurnStartSource,
+  codexTurnStartDestination,
+)
+
+await fs.copyFile(
+  claudeHookSource,
+  codexStopDestination,
+)
+
 console.log(
   'Bundled Good Manners skill into CLI package',
 )
