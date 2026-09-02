@@ -63,3 +63,8 @@ export type {
   BuildReviewContextInput,
   BuildReviewContextResult,
 } from './context-packet/review-context.js'
+
+export {
+  filterMeaningfulUiFiles,
+  isMeaningfulUiFile,
+} from './context-packet/changed-files.js'
