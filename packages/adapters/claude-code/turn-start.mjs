@@ -9,9 +9,7 @@ import {
 async function readInput() {
   let input = ''
 
-  for await (
-    const chunk of process.stdin
-  ) {
+  for await (const chunk of process.stdin) {
     input += chunk
   }
 
@@ -21,10 +19,9 @@ async function readInput() {
 let event
 
 try {
-  event =
-    JSON.parse(
-      await readInput(),
-    )
+  event = JSON.parse(
+    await readInput(),
+  )
 } catch {
   process.stdout.write('{}\n')
   process.exit(0)
@@ -40,12 +37,11 @@ if (
 
 /*
  * Compaction happens mid-turn/session. Resetting the
- * baseline there would hide UI changes Claude already
- * made before compaction.
+ * baseline there would hide UI changes already made
+ * before compaction.
  */
 if (
-  event.hook_event_name ===
-    'SessionStart' &&
+  event.hook_event_name === 'SessionStart' &&
   event.source === 'compact'
 ) {
   process.stdout.write('{}\n')
@@ -54,15 +50,21 @@ if (
 
 await cleanupSessionStates()
 
-const files =
-  await captureUiState(
-    event.cwd,
-  )
+const files = await captureUiState(
+  event.cwd,
+)
+
+const prompt =
+  event.hook_event_name === 'UserPromptSubmit' &&
+  typeof event.prompt === 'string'
+    ? event.prompt
+    : ''
 
 await writeSessionState({
   sessionId: event.session_id,
   cwd: event.cwd,
   files,
+  prompt,
 })
 
 process.stdout.write('{}\n')

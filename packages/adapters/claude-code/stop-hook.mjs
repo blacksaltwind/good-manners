@@ -10,9 +10,7 @@ import {
 async function readInput() {
   let input = ''
 
-  for await (
-    const chunk of process.stdin
-  ) {
+  for await (const chunk of process.stdin) {
     input += chunk
   }
 
@@ -23,13 +21,64 @@ function allow() {
   process.stdout.write('{}\n')
 }
 
+async function finalReviewReason({
+  cwd,
+  files,
+  prompt,
+}) {
+  try {
+    const {
+      buildReviewPacket,
+    } = await import(
+      './review-runtime.mjs'
+    )
+
+    const review = await buildReviewPacket({
+      cwd,
+      changedFiles: files,
+      prompt,
+    })
+
+    if (
+      review.shouldReview &&
+      review.context
+    ) {
+      return review.context
+    }
+  } catch {
+    // Source-level hook tests do not bundle the review
+    // runtime. Installed builds do. Fall back safely.
+  }
+
+  const listedFiles = files
+    .slice(0, 12)
+    .map((file) => `- ${file}`)
+    .join('\n')
+
+  const more = files.length > 12
+    ? `\n- ...and ${files.length - 12} more`
+    : ''
+
+  return [
+    'GOOD MANNERS FINAL REVIEW',
+    '',
+    'Changed UI files:',
+    listedFiles + more,
+    '',
+    'Review only behavior affected by these changes.',
+    'If there is no meaningful UX issue, make no changes and finish.',
+    'If there is a meaningful UX issue, correct only that issue, then finish.',
+    'Do not redesign unrelated UI or add decorative UI.',
+    'This is the only automatic correction pass.',
+  ].join('\n')
+}
+
 let event
 
 try {
-  event =
-    JSON.parse(
-      await readInput(),
-    )
+  event = JSON.parse(
+    await readInput(),
+  )
 } catch {
   allow()
   process.exit(0)
@@ -43,21 +92,14 @@ if (
   process.exit(0)
 }
 
-const current =
-  await captureUiState(
-    event.cwd,
-  )
+const current = await captureUiState(
+  event.cwd,
+)
 
-if (!current) {
-  allow()
-  process.exit(0)
-}
-
-const baseline =
-  await readSessionState({
-    sessionId: event.session_id,
-    cwd: event.cwd,
-  })
+const baseline = await readSessionState({
+  sessionId: event.session_id,
+  cwd: event.cwd,
+})
 
 /*
  * A session that started before Good Manners was
@@ -78,11 +120,9 @@ if (!baseline) {
 /*
  * This is the continuation caused by our own Stop
  * block. Commit the corrected UI as the next turn's
- * baseline and allow Claude to finish.
+ * baseline and allow the agent to finish.
  */
-if (
-  event.stop_hook_active === true
-) {
+if (event.stop_hook_active === true) {
   await writeSessionState({
     sessionId: event.session_id,
     cwd: event.cwd,
@@ -93,11 +133,10 @@ if (
   process.exit(0)
 }
 
-const files =
-  changedUiFiles(
-    baseline,
-    current,
-  )
+const files = changedUiFiles(
+  baseline.files,
+  current,
+)
 
 if (files.length === 0) {
   await writeSessionState({
@@ -110,33 +149,11 @@ if (files.length === 0) {
   process.exit(0)
 }
 
-const listedFiles =
-  files
-    .slice(0, 12)
-    .map(
-      (file) => `- ${file}`,
-    )
-    .join('\n')
-
-const more =
-  files.length > 12
-    ? `\n- ...and ${files.length - 12} more`
-    : ''
-
-const reason = [
-  'Good Manners final UX review is required because this turn changed meaningful UI files.',
-  '',
-  'Changed UI files:',
-  listedFiles + more,
-  '',
-  'Use the installed Good Manners skill to review only behavior affected by these changes.',
-  'Check relevant loading, empty, error, retry, cancellation, interruption, destructive-action, form, navigation, recovery, and accessibility behavior.',
-  'If there is no meaningful UX issue, make no changes and finish.',
-  'If there is a meaningful UX issue, correct only that issue, then finish.',
-  'Do not redesign unrelated UI or add decorative UI.',
-  'Do not narrate a Good Manners checklist.',
-  'This is the only automatic correction pass.',
-].join('\n')
+const reason = await finalReviewReason({
+  cwd: event.cwd,
+  files,
+  prompt: baseline.prompt,
+})
 
 process.stdout.write(
   JSON.stringify({

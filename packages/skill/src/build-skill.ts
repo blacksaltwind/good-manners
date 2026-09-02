@@ -16,6 +16,25 @@ const repoRoot = path.resolve(
   '../..',
 )
 
+
+const publicPackageRoot = path.join(
+  repoRoot,
+  'packages',
+  'cli',
+)
+
+const publicPackage = JSON.parse(
+  await fs.readFile(
+    path.join(
+      publicPackageRoot,
+      'package.json',
+    ),
+    'utf8',
+  ),
+) as { version: string }
+
+const PUBLIC_VERSION = publicPackage.version
+
 const skillRoot = path.join(
   packageRoot,
   'dist',
@@ -57,7 +76,7 @@ name: good-manners
 description: Human-first UX and usability guardrails for creating, changing, reviewing, or debugging user-facing interfaces. Use for forms, navigation, loading states, errors, destructive actions, accessibility, user flows, interaction design, and other frontend UX work.
 license: MIT
 metadata:
-  version: "0.0.1"
+  version: "${PUBLIC_VERSION}"
 ---
 
 # Good Manners
@@ -148,6 +167,26 @@ Keep the review focused and perform it once.
   await fs.writeFile(
     path.join(skillRoot, 'SKILL.md'),
     content,
+  )
+}
+
+
+async function writeRulesJson(
+  rules: Rule[],
+) {
+  await fs.writeFile(
+    path.join(
+      skillRoot,
+      'rules.json',
+    ),
+    JSON.stringify(
+      {
+        schema_version: 1,
+        rules,
+      },
+      null,
+      2,
+    ) + '\n',
   )
 }
 
@@ -260,6 +299,20 @@ async function main() {
   }
 
   await writeSkillMd()
+  await writeRulesJson(rules)
+
+  await fs.copyFile(
+    path.join(
+      repoRoot,
+      'packages',
+      'core',
+      'ui-files.json',
+    ),
+    path.join(
+      skillRoot,
+      'ui-files.json',
+    ),
+  )
 
   for (
     const [category, categoryRules]

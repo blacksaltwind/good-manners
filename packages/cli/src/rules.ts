@@ -1,17 +1,21 @@
 import fs from 'node:fs/promises'
-import path from 'node:path'
 import {
   fileURLToPath,
 } from 'node:url'
 
 export type BundledRule = {
   id: string
+  title: string
   category: string
-  severity: 'MUST' | 'SHOULD' | 'CONSIDER'
+  severity: 'must' | 'should' | 'consider'
   instruction: string
+  tags?: string[]
 }
 
-const RULE_LINE = /^- \*\*([^*]+)\*\* \[(MUST|SHOULD|CONSIDER)\] (.+)$/
+type RulesDocument = {
+  schema_version: 1
+  rules: BundledRule[]
+}
 
 function normalize(
   value: string,
@@ -19,77 +23,33 @@ function normalize(
   return value
     .toLowerCase()
     .replace(
-      /[^-a-z0-9.]+/g,
+      /[^a-z0-9.-]+/g,
       ' ',
     )
     .trim()
 }
 
 export async function loadBundledRules(
-  referencesDirectory: string,): Promise<BundledRule[]> {
-  const entries =
-    await fs.readdir(
-      referencesDirectory,
-      {
-        withFileTypes: true,
-      },
-    )
+  rulesPath: string,
+): Promise<BundledRule[]> {
+  const parsed = JSON.parse(
+    await fs.readFile(
+      rulesPath,
+      'utf8',
+    ),
+  ) as Partial<RulesDocument>
 
-  const rules: BundledRule[] = []
-
-  for (
-    const entry of
-    entries
-      .filter((entry) =>
-        entry.isFile() &&
-        entry.name.endsWith('.md'),
-      )
-      .sort((a, b) =>
-        a.name.localeCompare(b.name),
-      )
+  if (
+    parsed.schema_version !== 1 ||
+    !Array.isArray(parsed.rules)
   ) {
-    const category =
-      path.basename(
-        entry.name,
-        '.md',
-      )
-
-    const source =
-      await fs.readFile(
-        path.join(
-          referencesDirectory,
-          entry.name,
-        ),
-        'utf8',
-      )
-
-    for (const line of source.split('\n')) {
-      const match =
-        RULE_LINE.exec(line.trim())
-
-      if (!match) {
-        continue
-      }
-
-      const [
-        ,
-        id,
-        severity,
-        instruction,
-      ] = match
-
-      rules.push({
-        id,
-        category,
-        severity:
-          severity as BundledRule['severity'],
-        instruction,
-      })
-    }
+    throw new Error(
+      'Invalid bundled Good Manners rule catalog.',
+    )
   }
 
-  return rules.sort((a, b) =>
-    a.id.localeCompare(b.id),
+  return [...parsed.rules].sort(
+    (a, b) => a.id.localeCompare(b.id),
   )
 }
 
@@ -104,69 +64,61 @@ function scoreRule(
   }
 
   const id = normalize(rule.id)
-  const category =
-    normalize(rule.category)
-  const instruction =
-    normalize(rule.instruction)
-  const severity =
-    normalize(rule.severity)
+  const title = normalize(rule.title)
+  const category = normalize(rule.category)
+  const instruction = normalize(rule.instruction)
+  const severity = normalize(rule.severity)
 
   let score = 0
 
   if (id === normalizedQuery) {
-    score += 100
+    score += 1000
   } else if (id.includes(normalizedQuery)) {
-    score += 60
+    score += 200
+  }
+
+  if (title === normalizedQuery) {
+    score += 180
+  } else if (title.includes(normalizedQuery)) {
+    score += 90
   }
 
   if (category === normalizedQuery) {
-    score += 50
-  } else if (
-    category.includes(normalizedQuery)
-  ) {
-    score += 35
+    score += 160
   }
 
-  if (
-    instruction.includes(
-      normalizedQuery,
-    )
-  ) {
-    score += 30
+  if (instruction.includes(normalizedQuery)) {
+    score += 120
   }
 
   if (severity === normalizedQuery) {
-    score += 20
+    score += 80
   }
 
-  const candidate =
-    `id:${id} category:${category} ${instruction} ${severity}`
+  const candidate = normalize(
+    [
+      rule.id,
+      rule.title,
+      rule.category,
+      rule.instruction,
+      rule.severity,
+      ...(rule.tags ?? []),
+    ].join(' '),
+  )
 
-  const tokens =
-    normalizedQuery
-      .split(' ')
-      .filter(
-        (token) => token.length > 1,
-      )
-
-  if (
-    tokens.length > 0 &&
-    tokens.every(() => false)
-  ) {
-    return score
-  }
-
-  const matchedTokens =
-    tokens.filter(
-      (token) =>
-        candidate.includes(token),
+  const tokens = normalizedQuery
+    .split(/\s+/)
+    .filter(
+      (token) => token.length > 1,
     )
 
   if (
     tokens.length > 0 &&
-    matchedTokens.length === tokens.length
+    tokens.every(
+      (token) => candidate.includes(token),
+    )
   ) {
-    score += 25 + matchedTokens.length
+    score += 50 + tokens.length
   }
 
   return score
@@ -174,19 +126,37 @@ function scoreRule(
 
 export function searchRules(
   rules: BundledRule[],
-  query: string,  limit = 20,
+  query: string,
+  limit = 20,
 ): BundledRule[] {
-  return rules
+  const normalizedQuery = normalize(query)
+
+  const exactCategory = rules.some(
+    (rule) =>
+      normalize(rule.category) ===
+      normalizedQuery,
+  )
+
+  const candidates = exactCategory
+    ? rules.filter(
+        (rule) =>
+          normalize(rule.category) ===
+          normalizedQuery,
+      )
+    : rules
+
+  return candidates
     .map((rule) => ({
       rule,
       score: scoreRule(rule, query),
     }))
-    .filter((result) =>
-      result.score > 0,
+    .filter(
+      (result) => result.score > 0,
     )
-    .sort((a, b) =>
-      b.score - a.score ||
-      a.rule.id.localeCompare(b.rule.id),
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.rule.id.localeCompare(b.rule.id),
     )
     .slice(0, limit)
     .map((result) => result.rule)
@@ -195,7 +165,11 @@ export function searchRules(
 function formatRule(
   rule: BundledRule,
 ) {
-  return `${rule.id} ${rule.severity}\n  ${rule.instruction}`
+  return [
+    `${rule.id} ${rule.severity.toUpperCase()}`,
+    `  ${rule.title}`,
+    `  ${rule.instruction}`,
+  ].join('\n')
 }
 
 export function formatRuleSummary(
@@ -222,22 +196,21 @@ export function formatRuleSummary(
       (a, b) => a[0].localeCompare(b[0]),
     )
   ) {
-    lines.push(
-      `- ${category}: ${count}`,
-    )
+    lines.push(`- ${category}: ${count}`)
   }
 
   lines.push('')
   lines.push(
     'Use: good-manners rules [query]',
-   )
+  )
 
   return lines.join('\n')
 }
 
 export function formatRuleSearch(
   rules: BundledRule[],
-  query: string,) {
+  query: string,
+) {
   if (rules.length === 0) {
     return `No Good Manners rules matched "${query}".`
   }
@@ -249,10 +222,10 @@ export function formatRuleSearch(
   ].join('\n\n')
 }
 
-export function bundledReferencesDirectory() {
+export function bundledRulesPath() {
   return fileURLToPath(
     new URL(
-      './skill/good-manners/references/',
+      './skill/good-manners/rules.json',
       import.meta.url,
     ),
   )
@@ -263,7 +236,7 @@ export async function getRulesOutput(
 ) {
   const rules =
     await loadBundledRules(
-      bundledReferencesDirectory(),
+      bundledRulesPath(),
     )
 
   const trimmed = query?.trim()

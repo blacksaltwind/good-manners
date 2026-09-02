@@ -77,4 +77,20 @@ describe('Good Manners skill build', () => {
       content.length,
     ).toBeLessThan(6000)
   })
+
+  it('creates the machine-readable rule catalog', async () => {
+    const parsed = JSON.parse(
+      await fs.readFile(
+        path.join(
+          skillRoot,
+          'rules.json',
+        ),
+        'utf8',
+      ),
+    )
+
+    expect(parsed.schema_version).toBe(1)
+    expect(parsed.rules).toHaveLength(100)
+  })
+
 })

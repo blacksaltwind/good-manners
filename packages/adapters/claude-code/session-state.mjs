@@ -7,29 +7,9 @@ import {
   execFileSync,
 } from 'node:child_process'
 
-const UI_EXTENSIONS = new Set([
-  '.html',
-  '.htm',
-  '.jsx',
-  '.tsx',
-  '.css',
-  '.scss',
-  '.sass',
-  '.less',
-])
-
-const SKIP_PARTS = new Set([
-  '.git',
-  'node_modules',
-  'dist',
-  'build',
-  'coverage',
-  '.next',
-  'out',
-  '.cache',
-  '.turbo',
-  '.vercel',
-])
+import {
+  getUiFileConfig,
+} from './ui-file-config.mjs'
 
 const DEFAULT_SESSION_MAX_AGE_MS =
   7 * 24 * 60 * 60 * 1000
@@ -37,25 +17,53 @@ const DEFAULT_SESSION_MAX_AGE_MS =
 const MAX_FALLBACK_FILES = 5000
 const MAX_FALLBACK_ENTRIES = 25000
 
+const config = await getUiFileConfig()
+const UI_EXTENSIONS = new Set(config.extensions)
+const UI_FILE_NAMES = new Set(config.fileNames)
+const SKIP_PARTS = new Set(config.skipDirectories)
+const SKIP_RECURSIVE_DIRECTORIES =
+  new Set(config.skipRecursiveDirectories)
+const SKIP_RECURSIVE_FILE_FRAGMENTS =
+  config.skipRecursiveFileFragments
+
 function isMeaningfulUiFile(filePath) {
   const normalized =
     filePath.replaceAll('\\', '/')
 
-  const parts = normalized.split('/')
+  const parts = normalized
+    .split('/')
+    .filter(Boolean)
 
   if (
     parts.some(
+      (part) => SKIP_PARTS.has(part),
+    ) ||
+    parts.some(
       (part) =>
-        SKIP_PARTS.has(part),
+        SKIP_RECURSIVE_DIRECTORIES.has(part),
     )
   ) {
     return false
   }
 
-  return UI_EXTENSIONS.has(
-    path.extname(
-      normalized,
-    ).toLowerCase(),
+  const lower = normalized.toLowerCase()
+
+  if (
+    SKIP_RECURSIVE_FILE_FRAGMENTS.some(
+      (fragment) => lower.includes(fragment),
+    )
+  ) {
+    return false
+  }
+
+  const baseName =
+    path.basename(normalized).toLowerCase()
+
+  return (
+    UI_FILE_NAMES.has(baseName) ||
+    UI_EXTENSIONS.has(
+      path.extname(normalized).toLowerCase(),
+    )
   )
 }
 
@@ -93,25 +101,24 @@ function statePath(sessionId) {
 
 function gitFiles(cwd) {
   try {
-    const output =
-      execFileSync(
-        'git',
-        [
-          'ls-files',
-          '--cached',
-          '--others',
-          '--exclude-standard',
+    const output = execFileSync(
+      'git',
+      [
+        'ls-files',
+        '--cached',
+        '--others',
+        '--exclude-standard',
+      ],
+      {
+        cwd,
+        encoding: 'utf8',
+        stdio: [
+          'ignore',
+          'pipe',
+          'ignore',
         ],
-        {
-          cwd,
-          encoding: 'utf8',
-          stdio: [
-            'ignore',
-            'pipe',
-            'ignore',
-          ],
-        },
-      )
+      },
+    )
 
     return [
       ...new Set(
@@ -145,13 +152,12 @@ async function fallbackFiles(cwd) {
     let entries
 
     try {
-      entries =
-        await fs.readdir(
-          absoluteDirectory,
-          {
-            withFileTypes: true,
-          },
-        )
+      entries = await fs.readdir(
+        absoluteDirectory,
+        {
+          withFileTypes: true,
+        },
+      )
     } catch {
       return
     }
@@ -170,19 +176,17 @@ async function fallbackFiles(cwd) {
         continue
       }
 
-      const relativePath =
-        relativeDirectory
-          ? path.join(
-              relativeDirectory,
-              entry.name,
-            )
-          : entry.name
+      const relativePath = relativeDirectory
+        ? path.join(
+            relativeDirectory,
+            entry.name,
+          )
+        : entry.name
 
       if (entry.isDirectory()) {
         if (
-          SKIP_PARTS.has(
-            entry.name,
-          )
+          SKIP_PARTS.has(entry.name) ||
+          SKIP_RECURSIVE_DIRECTORIES.has(entry.name)
         ) {
           continue
         }
@@ -194,37 +198,25 @@ async function fallbackFiles(cwd) {
           ),
           relativePath,
         )
-
         continue
       }
 
       if (
         entry.isFile() &&
-        isMeaningfulUiFile(
-          relativePath,
-        )
+        isMeaningfulUiFile(relativePath)
       ) {
         files.push(relativePath)
       }
     }
   }
 
-  await walk(
-    cwd,
-    '',
-  )
-
+  await walk(cwd, '')
   return files.sort()
 }
 
 async function uiFiles(cwd) {
   const tracked = gitFiles(cwd)
-
-  if (tracked) {
-    return tracked
-  }
-
-  return fallbackFiles(cwd)
+  return tracked ?? fallbackFiles(cwd)
 }
 
 async function fileFingerprint(
@@ -232,13 +224,12 @@ async function fileFingerprint(
   relativePath,
 ) {
   try {
-    const content =
-      await fs.readFile(
-        path.join(
-          cwd,
-          relativePath,
-        ),
-      )
+    const content = await fs.readFile(
+      path.join(
+        cwd,
+        relativePath,
+      ),
+    )
 
     return crypto
       .createHash('sha256')
@@ -257,12 +248,8 @@ async function fileFingerprint(
   }
 }
 
-export async function captureUiState(
-  cwd,
-) {
-  const files =
-    await uiFiles(cwd)
-
+export async function captureUiState(cwd) {
+  const files = await uiFiles(cwd)
   const fingerprints = {}
 
   for (const file of files) {
@@ -280,6 +267,7 @@ export async function writeSessionState({
   sessionId,
   cwd,
   files,
+  prompt = '',
 }) {
   const target = statePath(sessionId)
 
@@ -301,9 +289,13 @@ export async function writeSessionState({
     temporary,
     JSON.stringify(
       {
-        version: 1,
+        version: 2,
         cwd: path.resolve(cwd),
         files,
+        prompt:
+          typeof prompt === 'string'
+            ? prompt
+            : '',
         updatedAt:
           new Date().toISOString(),
       },
@@ -331,16 +323,16 @@ export async function readSessionState({
   }
 
   try {
-    const parsed =
-      JSON.parse(
-        await fs.readFile(
-          target,
-          'utf8',
-        ),
-      )
+    const parsed = JSON.parse(
+      await fs.readFile(
+        target,
+        'utf8',
+      ),
+    )
 
     if (
-      parsed?.version !== 1 ||
+      (parsed?.version !== 1 &&
+        parsed?.version !== 2) ||
       parsed.cwd !== path.resolve(cwd) ||
       !parsed.files ||
       typeof parsed.files !== 'object' ||
@@ -349,30 +341,33 @@ export async function readSessionState({
       return null
     }
 
-    return parsed.files
+    return {
+      files: parsed.files,
+      prompt:
+        typeof parsed.prompt === 'string'
+          ? parsed.prompt
+          : '',
+    }
   } catch {
     return null
   }
 }
 
 export async function cleanupSessionStates({
-  maxAgeMs =
-    DEFAULT_SESSION_MAX_AGE_MS,
+  maxAgeMs = DEFAULT_SESSION_MAX_AGE_MS,
   now = Date.now(),
 } = {}) {
-  const directory =
-    sessionsDirectory()
+  const directory = sessionsDirectory()
 
   let entries
 
   try {
-    entries =
-      await fs.readdir(
-        directory,
-        {
-          withFileTypes: true,
-        },
-      )
+    entries = await fs.readdir(
+      directory,
+      {
+        withFileTypes: true,
+      },
+    )
   } catch {
     return 0
   }
@@ -384,21 +379,21 @@ export async function cleanupSessionStates({
       !entry.isFile() ||
       !(
         entry.name.endsWith('.json') ||
-        entry.name.endsWith('.json.tmp')
+        /\.json(?:\.\d+)?\.tmp$/.test(
+          entry.name,
+        )
       )
     ) {
       continue
     }
 
-    const target =
-      path.join(
-        directory,
-        entry.name,
-      )
+    const target = path.join(
+      directory,
+      entry.name,
+    )
 
     try {
-      const stat =
-        await fs.stat(target)
+      const stat = await fs.stat(target)
 
       if (
         now - stat.mtimeMs >
@@ -410,7 +405,6 @@ export async function cleanupSessionStates({
             force: true,
           },
         )
-
         removed += 1
       }
     } catch {
@@ -425,11 +419,10 @@ export function changedUiFiles(
   before,
   after,
 ) {
-  const files =
-    new Set([
-      ...Object.keys(before),
-      ...Object.keys(after),
-    ])
+  const files = new Set([
+    ...Object.keys(before),
+    ...Object.keys(after),
+  ])
 
   return [...files]
     .filter(

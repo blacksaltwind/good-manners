@@ -11,3 +11,5 @@ packages/skill/dist
 
 packages/cli/dist
 packages/cli/*.tgz
+
+packages/checker/dist

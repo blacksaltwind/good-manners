@@ -16,12 +16,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "pnpm --filter @good-manners/checker build && pnpm --filter @good-manners/skill build && tsc -p tsconfig.json && node scripts/copy-skill.mjs",
+    "build": "pnpm --filter @good-manners/skill build && node scripts/build-bundles.mjs && node scripts/copy-skill.mjs",
     "dev": "tsx src/index.ts",
     "prepack": "pnpm run build",
     "test:installer": "pnpm run build && node scripts/test-installer.mjs"
   },
-  "dependencies": {
-    "@good-manners/checker": "workspace:*"
+  "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

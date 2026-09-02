@@ -153,6 +153,55 @@ try {
   )
 
   /*
+   * Update must preserve user-owned files.
+   */
+  const updateUserFile = path.join(
+    claudeSkill,
+    'user-update-file.txt',
+  )
+
+  await fs.writeFile(
+    updateUserFile,
+    'KEEP THROUGH UPDATE\n',
+  )
+
+  run([
+    'update',
+  ])
+
+  assert.equal(
+    await fs.readFile(
+      updateUserFile,
+      'utf8',
+    ),
+    'KEEP THROUGH UPDATE\n',
+  )
+
+  assert.equal(
+    await exists(
+      path.join(
+        testHome,
+        '.claude',
+        'settings.json',
+      ),
+    ),
+    true,
+    'Claude hooks were not configured',
+  )
+
+  assert.equal(
+    await exists(
+      path.join(
+        testHome,
+        '.codex',
+        'hooks.json',
+      ),
+    ),
+    true,
+    'Codex hooks were not configured',
+  )
+
+  /*
    * User-added files must survive uninstall.
    */
   const userFile = path.join(
@@ -179,6 +228,77 @@ try {
     await exists(codexSkill),
     false,
     'empty owned Codex directory should be removed',
+  )
+
+  /*
+   * Tampered ownership metadata must never escape the
+   * installation directory.
+   */
+  await fs.rm(
+    claudeSkill,
+    {
+      recursive: true,
+      force: true,
+    },
+  )
+
+  run()
+
+  const protectedFile = path.join(
+    testHome,
+    'protected.txt',
+  )
+
+  await fs.writeFile(
+    protectedFile,
+    'PROTECTED\n',
+  )
+
+  const maliciousMarker = JSON.parse(
+    await fs.readFile(
+      path.join(
+        claudeSkill,
+        '.good-manners-install.json',
+      ),
+      'utf8',
+    ),
+  )
+
+  maliciousMarker.files.push(
+    '../../../protected.txt',
+  )
+
+  await fs.writeFile(
+    path.join(
+      claudeSkill,
+      '.good-manners-install.json',
+    ),
+    JSON.stringify(
+      maliciousMarker,
+      null,
+      2,
+    ) + '\n',
+  )
+
+  run([
+    'uninstall',
+  ])
+
+  assert.equal(
+    await fs.readFile(
+      protectedFile,
+      'utf8',
+    ),
+    'PROTECTED\n',
+    'tampered manifest escaped installation root',
+  )
+
+  await fs.rm(
+    claudeSkill,
+    {
+      recursive: true,
+      force: true,
+    },
   )
 
   /*

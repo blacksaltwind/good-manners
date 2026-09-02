@@ -158,6 +158,46 @@ await fs.copyFile(
   codexStopDestination,
 )
 
+
+const uiFileConfigSource = path.join(
+  repoRoot,
+  'packages',
+  'adapters',
+  'claude-code',
+  'ui-file-config.mjs',
+)
+
+await fs.copyFile(
+  uiFileConfigSource,
+  path.join(
+    destination,
+    'scripts',
+    'ui-file-config.mjs',
+  ),
+)
+
+const reviewRuntimeSource = path.join(
+  cliRoot,
+  'dist',
+  'review-runtime.mjs',
+)
+
+await fs.copyFile(
+  reviewRuntimeSource,
+  path.join(
+    destination,
+    'scripts',
+    'review-runtime.mjs',
+  ),
+)
+
+await fs.rm(
+  reviewRuntimeSource,
+  {
+    force: true,
+  },
+)
+
 console.log(
   'Bundled Good Manners skill into CLI package',
 )

@@ -77,4 +77,32 @@ describe('changed UI file detection', () => {
       'src/z.css',
     ])
   })
+
+  it('recognizes Vue, Svelte, Astro, and MDX', () => {
+    for (const file of [
+      'src/App.vue',
+      'src/App.svelte',
+      'src/App.astro',
+      'src/Guide.mdx',
+    ]) {
+      expect(
+        isMeaningfulUiFile(file),
+      ).toBe(true)
+    }
+  })
+
+  it('ignores tests, stories, and fixtures for automatic review', () => {
+    for (const file of [
+      'src/App.test.tsx',
+      'src/App.spec.tsx',
+      'src/App.stories.tsx',
+      'src/__tests__/App.tsx',
+      'src/fixtures/Broken.tsx',
+    ]) {
+      expect(
+        isMeaningfulUiFile(file),
+      ).toBe(false)
+    }
+  })
+
 })

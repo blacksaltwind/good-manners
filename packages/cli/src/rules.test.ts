@@ -12,104 +12,82 @@ import {
   searchRules,
 } from './rules.js'
 
-const referencesDirectory =
-  path.resolve(
-    'packages/skill/dist/good-manners/references',
-  )
+const rulesPath = path.resolve(
+  'packages/skill/dist/good-manners/rules.json',
+)
 
 describe('Good Manners rules search', () => {
   it('loads the full bundled rule catalog', async () => {
     const rules =
-      await loadBundledRules(
-        referencesDirectory,
-      )
+      await loadBundledRules(rulesPath)
 
     expect(rules).toHaveLength(100)
   })
 
   it('finds an exact rule id', async () => {
     const rules =
-      await loadBundledRules(
-        referencesDirectory,
-      )
+      await loadBundledRules(rulesPath)
 
-    const results =
-      searchRules(
-        rules,
-        'error.preserve-input',
-      )
+    const results = searchRules(
+      rules,
+      'error.preserve-input',
+    )
 
     expect(results[0]?.id).toBe(
       'error.preserve-input',
     )
   })
 
-  it('is case-insensitive for category searches', async () => {
+  it('is case-insensitive for exact category searches', async () => {
     const rules =
-      await loadBundledRules(
-        referencesDirectory,
-      )
+      await loadBundledRules(rulesPath)
 
-    const results =
-      searchRules(
-        rules,
-        'FORM',
-      )
+    const results = searchRules(
+      rules,
+      'FORM',
+    )
 
-    expect(
-      results.length,
-    ).toBeGreaterThan(0)
-
+    expect(results).toHaveLength(12)
     expect(
       results.every(
-        (rule) =>
-          rule.category === 'form',
+        (rule) => rule.category === 'form',
       ),
     ).toBe(true)
   })
 
-  it('matches multi-word queries across ids and instructions', async () => {
+  it('matches multi-word queries across ids, titles, and instructions', async () => {
     const rules =
-      await loadBundledRules(
-        referencesDirectory,
-      )
+      await loadBundledRules(rulesPath)
 
-    const results =
-      searchRules(
-        rules,
-        'preserve input',
-      )
+    const results = searchRules(
+      rules,
+      'preserve input',
+    )
 
     expect(
       results.some(
         (rule) =>
-          rule.id ===
-          'error.preserve-input',
+          rule.id === 'error.preserve-input',
       ),
     ).toBe(true)
   })
 
   it('limits vague search results', async () => {
     const rules =
-      await loadBundledRules(
-        referencesDirectory,
-      )
+      await loadBundledRules(rulesPath)
 
-    const results =
-      searchRules(
-        rules,
-        'error',
-        5,
-      )
+    const results = searchRules(
+      rules,
+      'error',
+      5,
+    )
 
     expect(results.length).toBeLessThanOrEqual(5)
   })
 
   it('produces a category summary', async () => {
     const rules =
-      await loadBundledRules(
-        referencesDirectory,
-      )
+      await loadBundledRules(rulesPath)
 
     const output =
       formatRuleSummary(rules)
@@ -117,12 +95,7 @@ describe('Good Manners rules search', () => {
     expect(output).toContain(
       'Good Manners rules: 100',
     )
-
-    expect(output).toContain(
-      '- form: 12',
-    )
-    expect(output).toContain(
-      '- accessibility: 15',
-    )
+    expect(output).toContain('- form: 12')
+    expect(output).toContain('- accessibility: 15')
   })
 })

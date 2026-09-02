@@ -233,8 +233,19 @@ describe('Claude session state fallback', () => {
         'stale-session.json',
       )
 
+    const staleTemporary =
+      path.join(
+        sessionDirectory,
+        'stale-session.json.12345.tmp',
+      )
+
     await fs.writeFile(
       stale,
+      '{}',
+    )
+
+    await fs.writeFile(
+      staleTemporary,
       '{}',
     )
 
@@ -246,6 +257,12 @@ describe('Claude session state fallback', () => {
 
     await fs.utimes(
       stale,
+      old,
+      old,
+    )
+
+    await fs.utimes(
+      staleTemporary,
       old,
       old,
     )
@@ -262,6 +279,12 @@ describe('Claude session state fallback', () => {
 
     await expect(
       fs.access(stale),
+    ).rejects.toMatchObject({
+      code: 'ENOENT',
+    })
+
+    await expect(
+      fs.access(staleTemporary),
     ).rejects.toMatchObject({
       code: 'ENOENT',
     })

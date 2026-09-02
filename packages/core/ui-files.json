@@ -1,0 +1,42 @@
+{
+  "extensions": [
+    ".html",
+    ".htm",
+    ".jsx",
+    ".tsx",
+    ".css",
+    ".scss",
+    ".sass",
+    ".less",
+    ".vue",
+    ".svelte",
+    ".astro",
+    ".mdx"
+  ],
+  "fileNames": [
+    "index.html"
+  ],
+  "skipDirectories": [
+    ".git",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".next",
+    "out",
+    ".cache",
+    ".turbo",
+    ".vercel"
+  ],
+  "skipRecursiveDirectories": [
+    "__tests__",
+    "__fixtures__",
+    "fixtures"
+  ],
+  "skipRecursiveFileFragments": [
+    ".test.",
+    ".spec.",
+    ".stories.",
+    ".story."
+  ]
+}

@@ -8,20 +8,26 @@ import {
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import {
   installClaudeReviewHooks,
   removeClaudeReviewHooks,
 } from './claude-settings.js'
 
-import { checkPath } from '@good-manners/checker'
+import { checkPath } from '../../checker/src/index.js'
+
+import { getRulesOutput } from './rules.js'
 
 type Command =
   | 'install'
   | 'check'
+  | 'rules'
   | 'status'
   | 'update'
   | 'uninstall'
+  | 'help'
+  | 'version'
 
 type Target = {
   name: string
@@ -35,12 +41,26 @@ type InstallMarker = {
   files: string[]
 }
 
-const VERSION = '0.0.1'
+const moduleDirectory = path.dirname(
+  fileURLToPath(import.meta.url),
+)
 
 const packageRoot = path.resolve(
-  import.meta.dirname,
+  moduleDirectory,
   '..',
 )
+
+const packageMetadata = JSON.parse(
+  await fs.readFile(
+    path.join(
+      packageRoot,
+      'package.json',
+    ),
+    'utf8',
+  ),
+) as { version: string }
+
+const VERSION = packageMetadata.version
 
 const skillSource = path.join(
   packageRoot,
@@ -1089,47 +1109,105 @@ async function removeCodexIntegration(
   })
 }
 
-function parseCommand(): {
+function printHelp() {
+  console.log(
+    [
+      'Good Manners',
+      '',
+      'Usage:',
+      '  good-manners [install] [--dry-run]',
+      '  good-manners status',
+      '  good-manners update [--dry-run]',
+      '  good-manners uninstall [--dry-run]',
+      '  good-manners check [path]',
+      '  good-manners rules [query]',
+      '  good-manners --version',
+      '',
+      'Good UX is just good manners.',
+    ].join('\n'),
+  )
+}
+
+type ParsedCommand = {
   command: Command
   dryRun: boolean
-} {
-  const args =
-    process.argv.slice(2)
+  args: string[]
+}
 
-  const dryRun =
-    args.includes('--dry-run')
+function parseCommand(): ParsedCommand {
+  const argv = process.argv.slice(2)
 
-  const positional =
-    args.filter(
-      (arg) =>
-        !arg.startsWith('--'),
+  const allowedFlags = new Set([
+    '--dry-run',
+    '--help',
+    '-h',
+    '--version',
+    '-v',
+  ])
+
+  const unknownFlag = argv.find(
+    (arg) =>
+      arg.startsWith('-') &&
+      !allowedFlags.has(arg),
+  )
+
+  if (unknownFlag) {
+    console.error(
+      `Unknown option: ${unknownFlag}`,
     )
-
-  const raw =
-    positional[0] ??
-    'install'
+    printHelp()
+    process.exit(1)
+  }
 
   if (
-    raw !== 'install' &&
-    raw !== 'status' &&
-    raw !== 'update' &&
-    raw !== 'check' &&
-    raw !== 'uninstall'
+    argv.includes('--help') ||
+    argv.includes('-h')
   ) {
-    console.error(
-      `Unknown command: ${raw}`,
-    )
+    return {
+      command: 'help',
+      dryRun: false,
+      args: [],
+    }
+  }
 
-    console.error(
-      'Usage: good-manners [install|status|update|uninstall|check] [path] [--dry-run]',
-    )
+  if (
+    argv.includes('--version') ||
+    argv.includes('-v')
+  ) {
+    return {
+      command: 'version',
+      dryRun: false,
+      args: [],
+    }
+  }
 
+  const dryRun = argv.includes('--dry-run')
+
+  const positional = argv.filter(
+    (arg) => !arg.startsWith('-'),
+  )
+
+  const raw = positional[0] ?? 'install'
+
+  const commands = new Set<Command>([
+    'install',
+    'check',
+    'rules',
+    'status',
+    'update',
+    'uninstall',
+  ])
+
+  if (!commands.has(raw as Command)) {
+    console.error(`Unknown command: ${raw}`)
+    printHelp()
     process.exit(1)
   }
 
   return {
-    command: raw,
+    command: raw as Command,
     dryRun,
+    args: positional.slice(1),
   }
 }
 
@@ -1137,7 +1215,18 @@ async function main() {
   const {
     command,
     dryRun,
+    args,
   } = parseCommand()
+
+  if (command === 'help') {
+    printHelp()
+    return
+  }
+
+  if (command === 'version') {
+    console.log(VERSION)
+    return
+  }
 
   if (command === 'install') {
     await install(dryRun)
@@ -1159,23 +1248,20 @@ async function main() {
   }
 
   if (command === 'check') {
-    const positional =
-      process.argv
-        .slice(2)
-        .filter(
-          (arg) =>
-            !arg.startsWith('--'),
-        )
+    await check(args[0] ?? '.')
+    return
+  }
 
-    const target =
-      positional[1] ?? '.'
-
-    await check(target)
+  if (command === 'rules') {
+    console.log(
+      await getRulesOutput(
+        args.join(' '),
+      ),
+    )
     return
   }
 
   await removeClaudeIntegration(dryRun)
-
   await removeCodexIntegration(dryRun)
   await uninstall(dryRun)
 }
