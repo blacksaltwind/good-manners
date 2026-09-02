@@ -1,0 +1,23 @@
+schema_version: 1
+id: form.flexible-format
+version: 1
+title: Flexible Format
+category: form
+severity: should
+instruction: Accept reasonable variations in user-entered formats instead of
+  demanding cosmetic formatting.
+tags:
+  - form
+  - flexible
+  - format
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

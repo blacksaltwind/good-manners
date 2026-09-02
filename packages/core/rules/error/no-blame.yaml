@@ -1,0 +1,24 @@
+schema_version: 1
+id: error.no-blame
+version: 1
+title: No Blame
+category: error
+severity: should
+instruction: Avoid language that blames the user for ordinary mistakes or system failures.
+tags:
+  - error
+  - no
+  - blame
+  - validation
+applies_when:
+  any:
+    - error
+    - validation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

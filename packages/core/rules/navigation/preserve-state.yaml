@@ -1,0 +1,27 @@
+schema_version: 1
+id: navigation.preserve-state
+version: 1
+title: Preserve State
+category: navigation
+severity: should
+instruction: Preserve relevant list position, filters, and entered state when
+  users navigate back.
+tags:
+  - navigation
+  - preserve
+  - state
+  - search
+  - list
+applies_when:
+  any:
+    - navigation
+    - search
+    - list
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

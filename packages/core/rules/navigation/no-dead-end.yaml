@@ -1,0 +1,24 @@
+schema_version: 1
+id: navigation.no-dead-end
+version: 1
+title: No Dead End
+category: navigation
+severity: must
+instruction: Do not leave users on a screen with no clear way to continue,
+  recover, or leave.
+tags:
+  - navigation
+  - no
+  - dead
+  - end
+applies_when:
+  any:
+    - navigation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

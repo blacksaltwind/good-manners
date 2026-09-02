@@ -1,0 +1,22 @@
+schema_version: 1
+id: cognitive.grouping
+version: 1
+title: Grouping
+category: cognitive
+severity: should
+instruction: Group related information and controls so users can scan by meaningful chunks.
+tags:
+  - cognitive
+  - grouping
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

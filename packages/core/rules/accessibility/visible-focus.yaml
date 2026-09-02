@@ -1,0 +1,23 @@
+schema_version: 1
+id: accessibility.visible-focus
+version: 1
+title: Visible Focus
+category: accessibility
+severity: must
+instruction: Keyboard focus must remain clearly visible.
+tags:
+  - accessibility
+  - visible
+  - focus
+  - interactive
+applies_when:
+  any:
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

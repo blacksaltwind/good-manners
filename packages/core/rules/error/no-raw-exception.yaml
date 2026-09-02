@@ -1,0 +1,24 @@
+schema_version: 1
+id: error.no-raw-exception
+version: 1
+title: No Raw Exception
+category: error
+severity: must
+instruction: Do not expose raw stack traces, exception strings, or internal
+  error codes as the primary message.
+tags:
+  - error
+  - no
+  - raw
+  - exception
+applies_when:
+  any:
+    - error
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

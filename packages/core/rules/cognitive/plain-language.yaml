@@ -1,0 +1,23 @@
+schema_version: 1
+id: cognitive.plain-language
+version: 1
+title: Plain Language
+category: cognitive
+severity: should
+instruction: Use concise plain language suited to the user's task.
+tags:
+  - cognitive
+  - plain
+  - language
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

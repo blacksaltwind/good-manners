@@ -1,0 +1,26 @@
+schema_version: 1
+id: cognitive.no-cross-step-memory
+version: 1
+title: No Cross Step Memory
+category: cognitive
+severity: must
+instruction: Do not require users to remember information from a previous step
+  when it can be kept visible or carried forward.
+tags:
+  - cognitive
+  - no
+  - cross
+  - step
+  - memory
+  - multi-step
+applies_when:
+  any:
+    - multi-step
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

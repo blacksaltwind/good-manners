@@ -1,0 +1,23 @@
+schema_version: 1
+id: destructive.strong-confirmation
+version: 1
+title: Strong Confirmation
+category: destructive
+severity: should
+instruction: For catastrophic or identity-level actions, require deliberate
+  confirmation proportional to the consequence.
+tags:
+  - destructive
+  - strong
+  - confirmation
+applies_when:
+  any:
+    - destructive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

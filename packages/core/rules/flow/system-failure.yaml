@@ -1,0 +1,25 @@
+schema_version: 1
+id: flow.system-failure
+version: 1
+title: System Failure
+category: flow
+severity: must
+instruction: Provide a comprehensible and recoverable state for server or system failure.
+tags:
+  - flow
+  - system
+  - failure
+  - async
+  - error
+applies_when:
+  any:
+    - async
+    - error
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

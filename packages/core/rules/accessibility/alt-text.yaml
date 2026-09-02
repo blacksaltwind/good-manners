@@ -1,0 +1,24 @@
+schema_version: 1
+id: accessibility.alt-text
+version: 1
+title: Alt Text
+category: accessibility
+severity: must
+instruction: Meaningful images need an appropriate text alternative; decorative
+  images should not add noise.
+tags:
+  - accessibility
+  - alt
+  - text
+  - image
+applies_when:
+  any:
+    - image
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

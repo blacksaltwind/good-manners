@@ -1,0 +1,25 @@
+schema_version: 1
+id: cognitive.choice-overload
+version: 1
+title: Choice Overload
+category: cognitive
+severity: should
+instruction: Reduce, group, or prioritize large sets of equivalent choices.
+tags:
+  - cognitive
+  - choice
+  - overload
+  - selection
+  - list
+applies_when:
+  any:
+    - selection
+    - list
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

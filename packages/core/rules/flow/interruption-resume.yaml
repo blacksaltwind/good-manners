@@ -1,0 +1,26 @@
+schema_version: 1
+id: flow.interruption-resume
+version: 1
+title: Interruption Resume
+category: flow
+severity: should
+instruction: Preserve meaningful progress when a flow can be interrupted and resumed.
+tags:
+  - flow
+  - interruption
+  - resume
+  - multi-step
+  - long-running
+applies_when:
+  any:
+    - multi-step
+    - interruption
+    - long-running
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

@@ -1,0 +1,24 @@
+schema_version: 1
+id: cognitive.defaults
+version: 1
+title: Defaults
+category: cognitive
+severity: should
+instruction: Use safe defaults and remembered choices to reduce repetitive decisions.
+tags:
+  - cognitive
+  - defaults
+  - form
+  - selection
+applies_when:
+  any:
+    - form
+    - selection
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

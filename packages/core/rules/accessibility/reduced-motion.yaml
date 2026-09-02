@@ -1,0 +1,23 @@
+schema_version: 1
+id: accessibility.reduced-motion
+version: 1
+title: Reduced Motion
+category: accessibility
+severity: must
+instruction: Respect reduced-motion preferences and avoid motion required to
+  understand or operate the UI.
+tags:
+  - accessibility
+  - reduced
+  - motion
+applies_when:
+  any:
+    - motion
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

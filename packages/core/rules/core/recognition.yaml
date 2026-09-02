@@ -1,31 +1,21 @@
 schema_version: 1
 id: core.recognition
 version: 1
-title: Prefer recognition over recall
+title: Recognition
 category: core
 severity: should
-
-instruction: Prefer visible choices and context over requiring users to remember information.
-
+instruction: Prefer visible choices and context over requiring users to remember
+  information.
 tags:
-  - cognitive
-  - memory
-  - context
-
+  - core
+  - recognition
 applies_when:
   any: []
   all: []
   none: []
-
-review:
-  question: Is the user being asked to remember information the interface could keep visible?
-
 checks:
   deterministic: []
   agent: true
   autofix: suggest
-
 exceptions: []
-
-related:
-  - cognitive.no-cross-step-memory
+related: []

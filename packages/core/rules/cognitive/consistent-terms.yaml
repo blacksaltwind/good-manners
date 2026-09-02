@@ -1,0 +1,23 @@
+schema_version: 1
+id: cognitive.consistent-terms
+version: 1
+title: Consistent Terms
+category: cognitive
+severity: must
+instruction: Use the same term for the same concept or action throughout a flow.
+tags:
+  - cognitive
+  - consistent
+  - terms
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

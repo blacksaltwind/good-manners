@@ -1,0 +1,23 @@
+schema_version: 1
+id: flow.entry
+version: 1
+title: Entry
+category: flow
+severity: should
+instruction: Define what the user sees and can do on first entry to the flow.
+tags:
+  - flow
+  - entry
+  - multi-step
+applies_when:
+  any:
+    - flow
+    - multi-step
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

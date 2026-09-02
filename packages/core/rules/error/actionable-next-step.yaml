@@ -1,0 +1,27 @@
+schema_version: 1
+id: error.actionable-next-step
+version: 1
+title: Actionable Next Step
+category: error
+severity: must
+instruction: Tell the user what they can do next to recover.
+tags:
+  - error
+  - actionable
+  - next
+  - step
+  - form
+  - network
+applies_when:
+  any:
+    - error
+    - form
+    - network
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

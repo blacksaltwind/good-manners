@@ -1,0 +1,23 @@
+schema_version: 1
+id: feedback.optimistic-reconcile
+version: 1
+title: Optimistic Reconcile
+category: feedback
+severity: must
+instruction: If optimistic UI is used, reconcile failure clearly and restore a
+  trustworthy state.
+tags:
+  - feedback
+  - optimistic
+  - reconcile
+applies_when:
+  any:
+    - optimistic
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

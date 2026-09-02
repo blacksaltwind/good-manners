@@ -1,0 +1,22 @@
+schema_version: 1
+id: form.validation-timing
+version: 1
+title: Validation Timing
+category: form
+severity: should
+instruction: Validate at a time that helps correction without interrupting normal entry.
+tags:
+  - form
+  - validation
+  - timing
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

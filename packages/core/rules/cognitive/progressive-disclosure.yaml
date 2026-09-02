@@ -1,0 +1,27 @@
+schema_version: 1
+id: cognitive.progressive-disclosure
+version: 1
+title: Progressive Disclosure
+category: cognitive
+severity: should
+instruction: Hide advanced or secondary complexity until it becomes relevant.
+tags:
+  - cognitive
+  - progressive
+  - disclosure
+  - form
+  - settings
+  - navigation
+applies_when:
+  any:
+    - form
+    - settings
+    - navigation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

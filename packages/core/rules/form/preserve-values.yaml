@@ -1,0 +1,23 @@
+schema_version: 1
+id: form.preserve-values
+version: 1
+title: Preserve Values
+category: form
+severity: must
+instruction: Preserve entered values when validation fails or a recoverable
+  submission error occurs.
+tags:
+  - form
+  - preserve
+  - values
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

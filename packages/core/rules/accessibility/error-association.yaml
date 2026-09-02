@@ -1,0 +1,27 @@
+schema_version: 1
+id: accessibility.error-association
+version: 1
+title: Error Association
+category: accessibility
+severity: must
+instruction: Programmatically associate form errors and instructions with the
+  relevant controls.
+tags:
+  - accessibility
+  - error
+  - association
+  - form
+  - validation
+applies_when:
+  any:
+    - form
+    - validation
+    - error
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

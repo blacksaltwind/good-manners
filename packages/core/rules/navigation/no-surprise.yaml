@@ -1,0 +1,23 @@
+schema_version: 1
+id: navigation.no-surprise
+version: 1
+title: No Surprise
+category: navigation
+severity: must
+instruction: Do not navigate, open a new context, or discard work as an
+  unexpected side effect.
+tags:
+  - navigation
+  - no
+  - surprise
+applies_when:
+  any:
+    - navigation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

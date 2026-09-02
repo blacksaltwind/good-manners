@@ -1,0 +1,24 @@
+schema_version: 1
+id: flow.validation-failure
+version: 1
+title: Validation Failure
+category: flow
+severity: must
+instruction: Provide a recoverable path when user input is invalid.
+tags:
+  - flow
+  - validation
+  - failure
+  - form
+applies_when:
+  any:
+    - form
+    - validation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

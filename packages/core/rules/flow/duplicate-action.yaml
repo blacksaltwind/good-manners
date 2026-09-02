@@ -1,0 +1,25 @@
+schema_version: 1
+id: flow.duplicate-action
+version: 1
+title: Duplicate Action
+category: flow
+severity: must
+instruction: Prevent accidental duplicate execution of non-idempotent actions.
+tags:
+  - flow
+  - duplicate
+  - action
+  - mutation
+  - duplicate-action
+applies_when:
+  any:
+    - mutation
+    - duplicate-action
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

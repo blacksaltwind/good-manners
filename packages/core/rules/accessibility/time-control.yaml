@@ -1,0 +1,24 @@
+schema_version: 1
+id: accessibility.time-control
+version: 1
+title: Time Control
+category: accessibility
+severity: should
+instruction: Avoid unnecessary time limits and provide control or extension when
+  timing is required.
+tags:
+  - accessibility
+  - time
+  - control
+  - timed
+applies_when:
+  any:
+    - timed
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

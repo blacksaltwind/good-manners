@@ -1,0 +1,23 @@
+schema_version: 1
+id: destructive.prefer-undo
+version: 1
+title: Prefer Undo
+category: destructive
+severity: should
+instruction: Prefer undo over confirmation for easily reversible destructive actions.
+tags:
+  - destructive
+  - prefer
+  - undo
+applies_when:
+  any:
+    - destructive
+  all: []
+  none:
+    - irreversible
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

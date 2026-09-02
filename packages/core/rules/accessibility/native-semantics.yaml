@@ -1,0 +1,24 @@
+schema_version: 1
+id: accessibility.native-semantics
+version: 1
+title: Native Semantics
+category: accessibility
+severity: must
+instruction: Prefer native semantic elements and controls before recreating
+  behavior with generic containers.
+tags:
+  - accessibility
+  - native
+  - semantics
+  - interactive
+applies_when:
+  any:
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

@@ -1,0 +1,24 @@
+schema_version: 1
+id: accessibility.modal-focus
+version: 1
+title: Modal Focus
+category: accessibility
+severity: must
+instruction: Modal interactions must manage focus correctly and restore it when
+  the modal closes.
+tags:
+  - accessibility
+  - modal
+  - focus
+  - overlay
+applies_when:
+  any:
+    - overlay
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

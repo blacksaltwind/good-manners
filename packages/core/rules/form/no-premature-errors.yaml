@@ -1,0 +1,24 @@
+schema_version: 1
+id: form.no-premature-errors
+version: 1
+title: No Premature Errors
+category: form
+severity: should
+instruction: Do not show an error before the user has had a reasonable chance to
+  complete the field.
+tags:
+  - form
+  - no
+  - premature
+  - errors
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

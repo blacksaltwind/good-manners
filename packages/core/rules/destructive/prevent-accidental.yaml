@@ -1,0 +1,23 @@
+schema_version: 1
+id: destructive.prevent-accidental
+version: 1
+title: Prevent Accidental
+category: destructive
+severity: must
+instruction: Separate destructive actions from routine actions enough to reduce
+  accidental activation.
+tags:
+  - destructive
+  - prevent
+  - accidental
+applies_when:
+  any:
+    - destructive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

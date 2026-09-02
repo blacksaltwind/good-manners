@@ -1,0 +1,24 @@
+schema_version: 1
+id: responsive.preserve-priority
+version: 1
+title: Preserve Priority
+category: responsive
+severity: must
+instruction: Keep the primary task and critical status/actions discoverable
+  across supported viewport sizes.
+tags:
+  - responsive
+  - preserve
+  - priority
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

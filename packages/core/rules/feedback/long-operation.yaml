@@ -1,0 +1,23 @@
+schema_version: 1
+id: feedback.long-operation
+version: 1
+title: Long Operation
+category: feedback
+severity: should
+instruction: Set expectations and allow continued control during unusually long operations.
+tags:
+  - feedback
+  - long
+  - operation
+  - long-running
+applies_when:
+  any:
+    - long-running
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

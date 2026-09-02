@@ -1,0 +1,23 @@
+schema_version: 1
+id: navigation.current-location
+version: 1
+title: Current Location
+category: navigation
+severity: should
+instruction: Make the user's current location or selected section clear when
+  navigation depth makes it useful.
+tags:
+  - navigation
+  - current
+  - location
+applies_when:
+  any:
+    - navigation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

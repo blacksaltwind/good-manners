@@ -1,0 +1,25 @@
+schema_version: 1
+id: flow.success
+version: 1
+title: Success
+category: flow
+severity: must
+instruction: Make completion clear when success is not already obvious from the
+  resulting state.
+tags:
+  - flow
+  - success
+  - mutation
+  - async
+applies_when:
+  any:
+    - mutation
+    - async
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

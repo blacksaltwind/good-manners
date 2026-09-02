@@ -1,0 +1,26 @@
+schema_version: 1
+id: flow.happy-path
+version: 1
+title: Happy Path
+category: flow
+severity: must
+instruction: Provide a complete path from user intent to successful completion.
+tags:
+  - flow
+  - happy
+  - path
+  - form
+  - mutation
+applies_when:
+  any:
+    - flow
+    - form
+    - mutation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

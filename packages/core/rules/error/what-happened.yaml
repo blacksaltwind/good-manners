@@ -1,0 +1,24 @@
+schema_version: 1
+id: error.what-happened
+version: 1
+title: What Happened
+category: error
+severity: must
+instruction: Tell the user what failed when that information is useful and safe.
+tags:
+  - error
+  - what
+  - happened
+  - network
+applies_when:
+  any:
+    - error
+    - network
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

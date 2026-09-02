@@ -1,0 +1,25 @@
+schema_version: 1
+id: accessibility.target-size
+version: 1
+title: Target Size
+category: accessibility
+severity: should
+instruction: Interactive targets must be large and separated enough for reliable activation.
+tags:
+  - accessibility
+  - target
+  - size
+  - interactive
+  - touch
+applies_when:
+  any:
+    - interactive
+    - touch
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

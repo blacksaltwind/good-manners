@@ -1,0 +1,23 @@
+schema_version: 1
+id: flow.permission-denied
+version: 1
+title: Permission Denied
+category: flow
+severity: must
+instruction: Explain unavailable actions caused by permission and provide the
+  next viable path.
+tags:
+  - flow
+  - permission
+  - denied
+applies_when:
+  any:
+    - permission
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

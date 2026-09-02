@@ -1,0 +1,21 @@
+schema_version: 1
+id: navigation.hierarchy
+version: 1
+title: Hierarchy
+category: navigation
+severity: should
+instruction: Provide orientation aids when users navigate a genuinely deep hierarchy.
+tags:
+  - navigation
+  - hierarchy
+applies_when:
+  any:
+    - navigation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

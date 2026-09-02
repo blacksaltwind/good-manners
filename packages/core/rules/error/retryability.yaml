@@ -1,0 +1,25 @@
+schema_version: 1
+id: error.retryability
+version: 1
+title: Retryability
+category: error
+severity: should
+instruction: Make it clear whether retrying can succeed and whether it is safe.
+tags:
+  - error
+  - retryability
+  - retry
+  - network
+applies_when:
+  any:
+    - retry
+    - network
+    - error
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

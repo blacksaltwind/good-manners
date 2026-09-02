@@ -1,0 +1,26 @@
+schema_version: 1
+id: accessibility.color
+version: 1
+title: Color
+category: accessibility
+severity: must
+instruction: Do not rely on color alone to communicate meaning, status, selection, or error.
+tags:
+  - accessibility
+  - color
+  - error
+  - status
+  - selection
+applies_when:
+  any:
+    - error
+    - status
+    - selection
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

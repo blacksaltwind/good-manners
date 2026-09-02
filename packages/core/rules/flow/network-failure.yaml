@@ -1,0 +1,24 @@
+schema_version: 1
+id: flow.network-failure
+version: 1
+title: Network Failure
+category: flow
+severity: must
+instruction: Handle connectivity failure without silently losing user work.
+tags:
+  - flow
+  - network
+  - failure
+  - async
+applies_when:
+  any:
+    - network
+    - async
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

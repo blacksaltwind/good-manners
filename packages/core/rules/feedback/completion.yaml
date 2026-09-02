@@ -1,0 +1,24 @@
+schema_version: 1
+id: feedback.completion
+version: 1
+title: Completion
+category: feedback
+severity: should
+instruction: Confirm completion with specific feedback when the result is not self-evident.
+tags:
+  - feedback
+  - completion
+  - mutation
+  - async
+applies_when:
+  any:
+    - mutation
+    - async
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

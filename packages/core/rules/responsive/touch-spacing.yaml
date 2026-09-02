@@ -1,0 +1,24 @@
+schema_version: 1
+id: responsive.touch-spacing
+version: 1
+title: Touch Spacing
+category: responsive
+severity: should
+instruction: Provide sufficient target size and spacing for touch input.
+tags:
+  - responsive
+  - touch
+  - spacing
+  - interactive
+applies_when:
+  any:
+    - touch
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

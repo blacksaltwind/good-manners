@@ -1,0 +1,25 @@
+schema_version: 1
+id: error.no-dead-end
+version: 1
+title: No Dead End
+category: error
+severity: must
+instruction: Every recoverable error state must provide at least one viable next action.
+tags:
+  - error
+  - no
+  - dead
+  - end
+  - network
+applies_when:
+  any:
+    - error
+    - network
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

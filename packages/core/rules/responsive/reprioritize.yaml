@@ -1,0 +1,23 @@
+schema_version: 1
+id: responsive.reprioritize
+version: 1
+title: Reprioritize
+category: responsive
+severity: must
+instruction: Reflow and reprioritize the interface for narrow screens rather
+  than merely shrinking the desktop layout.
+tags:
+  - responsive
+  - reprioritize
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

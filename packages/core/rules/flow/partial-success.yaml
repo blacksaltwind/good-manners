@@ -1,0 +1,27 @@
+schema_version: 1
+id: flow.partial-success
+version: 1
+title: Partial Success
+category: flow
+severity: must
+instruction: Make partial completion explicit and identify what succeeded,
+  failed, and can be retried.
+tags:
+  - flow
+  - partial
+  - success
+  - bulk
+  - upload
+applies_when:
+  any:
+    - partial
+    - bulk
+    - upload
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

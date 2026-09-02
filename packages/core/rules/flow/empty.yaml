@@ -1,0 +1,27 @@
+schema_version: 1
+id: flow.empty
+version: 1
+title: Empty
+category: flow
+severity: should
+instruction: Design the no-data or no-result state with a useful explanation or next action.
+tags:
+  - flow
+  - empty
+  - search
+  - list
+  - table
+applies_when:
+  any:
+    - empty
+    - search
+    - list
+    - table
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

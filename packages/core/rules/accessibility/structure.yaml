@@ -1,0 +1,23 @@
+schema_version: 1
+id: accessibility.structure
+version: 1
+title: Structure
+category: accessibility
+severity: should
+instruction: Use meaningful headings, landmarks, lists, and table semantics to
+  expose structure.
+tags:
+  - accessibility
+  - structure
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

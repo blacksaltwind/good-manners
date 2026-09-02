@@ -1,0 +1,23 @@
+schema_version: 1
+id: accessibility.reflow
+version: 1
+title: Reflow
+category: accessibility
+severity: must
+instruction: Content and core actions must remain usable under text enlargement,
+  zoom, and narrow reflow.
+tags:
+  - accessibility
+  - reflow
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

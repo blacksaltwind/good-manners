@@ -1,0 +1,23 @@
+schema_version: 1
+id: form.persistent-label
+version: 1
+title: Persistent Label
+category: form
+severity: must
+instruction: Give each input a persistent visible label unless an equally clear
+  accessible pattern genuinely applies.
+tags:
+  - form
+  - persistent
+  - label
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

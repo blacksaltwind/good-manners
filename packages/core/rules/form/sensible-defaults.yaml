@@ -1,0 +1,22 @@
+schema_version: 1
+id: form.sensible-defaults
+version: 1
+title: Sensible Defaults
+category: form
+severity: should
+instruction: Use safe defaults that reduce effort without creating hidden commitments.
+tags:
+  - form
+  - sensible
+  - defaults
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

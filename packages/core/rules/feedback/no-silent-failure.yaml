@@ -1,0 +1,28 @@
+schema_version: 1
+id: feedback.no-silent-failure
+version: 1
+title: No Silent Failure
+category: feedback
+severity: must
+instruction: Never fail a user-initiated action silently.
+tags:
+  - feedback
+  - no
+  - silent
+  - failure
+  - mutation
+  - async
+  - error
+applies_when:
+  any:
+    - mutation
+    - async
+    - error
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

@@ -1,0 +1,24 @@
+schema_version: 1
+id: responsive.input-parity
+version: 1
+title: Input Parity
+category: responsive
+severity: must
+instruction: Do not make important functionality available only to hover, drag,
+  or a single input method.
+tags:
+  - responsive
+  - input
+  - parity
+  - interactive
+applies_when:
+  any:
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

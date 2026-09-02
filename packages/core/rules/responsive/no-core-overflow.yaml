@@ -1,0 +1,24 @@
+schema_version: 1
+id: responsive.no-core-overflow
+version: 1
+title: No Core Overflow
+category: responsive
+severity: must
+instruction: Core task content and actions must not require unintended horizontal scrolling.
+tags:
+  - responsive
+  - no
+  - core
+  - overflow
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

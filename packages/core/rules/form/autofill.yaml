@@ -1,0 +1,21 @@
+schema_version: 1
+id: form.autofill
+version: 1
+title: Autofill
+category: form
+severity: should
+instruction: Support browser autofill and password managers where relevant.
+tags:
+  - form
+  - autofill
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

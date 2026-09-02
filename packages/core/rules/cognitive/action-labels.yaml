@@ -1,0 +1,24 @@
+schema_version: 1
+id: cognitive.action-labels
+version: 1
+title: Action Labels
+category: cognitive
+severity: should
+instruction: Use specific action labels that describe the result rather than
+  vague labels such as OK or Proceed.
+tags:
+  - cognitive
+  - action
+  - labels
+  - interactive
+applies_when:
+  any:
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

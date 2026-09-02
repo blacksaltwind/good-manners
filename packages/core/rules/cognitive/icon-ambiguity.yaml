@@ -1,0 +1,22 @@
+schema_version: 1
+id: cognitive.icon-ambiguity
+version: 1
+title: Icon Ambiguity
+category: cognitive
+severity: should
+instruction: Do not rely on an unfamiliar icon alone when its meaning is not obvious.
+tags:
+  - cognitive
+  - icon
+  - ambiguity
+applies_when:
+  any:
+    - icon
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

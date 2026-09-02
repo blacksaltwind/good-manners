@@ -1,0 +1,24 @@
+schema_version: 1
+id: feedback.immediate
+version: 1
+title: Immediate
+category: feedback
+severity: must
+instruction: Give immediate perceptible feedback that an interaction was received.
+tags:
+  - feedback
+  - immediate
+  - interactive
+  - mutation
+applies_when:
+  any:
+    - interactive
+    - mutation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

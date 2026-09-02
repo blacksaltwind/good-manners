@@ -1,39 +1,28 @@
 schema_version: 1
-
 id: error.preserve-input
 version: 1
-
-title: Preserve valid input after recoverable errors
-
+title: Preserve Input
 category: error
 severity: must
-
-instruction: Preserve valid user input when a recoverable validation, submission, or network error occurs.
-
+instruction: Preserve valid user input after recoverable validation, network, or
+  submission failures.
 tags:
+  - error
+  - preserve
+  - input
   - form
   - mutation
   - network
-  - recovery
-
 applies_when:
   any:
     - form
     - mutation
+    - network
   all: []
   none: []
-
-review:
-  question: Can the user retry without repeating valid work?
-
 checks:
   deterministic: []
   agent: true
   autofix: suggest
-
-exceptions:
-  - sensitive-data-must-not-be-retained
-
-related:
-  - error.actionable-next-step
-  - flow.retry
+exceptions: []
+related: []

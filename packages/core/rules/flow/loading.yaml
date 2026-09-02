@@ -1,0 +1,26 @@
+schema_version: 1
+id: flow.loading
+version: 1
+title: Loading
+category: flow
+severity: must
+instruction: Represent pending work when a user action is not effectively instantaneous.
+tags:
+  - flow
+  - loading
+  - async
+  - mutation
+  - long-running
+applies_when:
+  any:
+    - async
+    - mutation
+    - long-running
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

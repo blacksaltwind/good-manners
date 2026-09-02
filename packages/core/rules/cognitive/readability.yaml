@@ -1,0 +1,23 @@
+schema_version: 1
+id: cognitive.readability
+version: 1
+title: Readability
+category: cognitive
+severity: should
+instruction: Keep functional copy scannable and avoid unnecessary prose inside
+  task interfaces.
+tags:
+  - cognitive
+  - readability
+  - ui
+applies_when:
+  any:
+    - ui
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

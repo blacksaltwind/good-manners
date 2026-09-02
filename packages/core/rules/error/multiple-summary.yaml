@@ -1,0 +1,26 @@
+schema_version: 1
+id: error.multiple-summary
+version: 1
+title: Multiple Summary
+category: error
+severity: should
+instruction: When many errors exist, provide a discoverable summary without
+  replacing field-level guidance.
+tags:
+  - error
+  - multiple
+  - summary
+  - form
+  - validation
+applies_when:
+  any:
+    - form
+    - validation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

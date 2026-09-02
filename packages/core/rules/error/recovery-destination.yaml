@@ -1,0 +1,24 @@
+schema_version: 1
+id: error.recovery-destination
+version: 1
+title: Recovery Destination
+category: error
+severity: must
+instruction: After failure, leave the user in a state from which recovery is possible.
+tags:
+  - error
+  - recovery
+  - destination
+  - network
+applies_when:
+  any:
+    - error
+    - network
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

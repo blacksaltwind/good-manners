@@ -1,0 +1,22 @@
+schema_version: 1
+id: form.required-optional
+version: 1
+title: Required Optional
+category: form
+severity: should
+instruction: Make required and optional fields clear without forcing users to infer them.
+tags:
+  - form
+  - required
+  - optional
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

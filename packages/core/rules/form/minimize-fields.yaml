@@ -1,0 +1,22 @@
+schema_version: 1
+id: form.minimize-fields
+version: 1
+title: Minimize Fields
+category: form
+severity: should
+instruction: Ask only for information needed for the current task.
+tags:
+  - form
+  - minimize
+  - fields
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

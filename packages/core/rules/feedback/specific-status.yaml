@@ -1,0 +1,26 @@
+schema_version: 1
+id: feedback.specific-status
+version: 1
+title: Specific Status
+category: feedback
+severity: should
+instruction: Use specific status language such as Saving, Saved, Failed, or
+  Retrying instead of vague activity.
+tags:
+  - feedback
+  - specific
+  - status
+  - async
+  - mutation
+applies_when:
+  any:
+    - async
+    - mutation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

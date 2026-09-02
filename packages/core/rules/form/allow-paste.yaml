@@ -1,0 +1,23 @@
+schema_version: 1
+id: form.allow-paste
+version: 1
+title: Allow Paste
+category: form
+severity: must
+instruction: Do not unnecessarily block paste into inputs, including password
+  and verification fields.
+tags:
+  - form
+  - allow
+  - paste
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

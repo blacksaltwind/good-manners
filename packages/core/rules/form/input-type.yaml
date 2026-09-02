@@ -1,0 +1,22 @@
+schema_version: 1
+id: form.input-type
+version: 1
+title: Input Type
+category: form
+severity: should
+instruction: Use the input type and control that matches the expected data and interaction.
+tags:
+  - form
+  - input
+  - type
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

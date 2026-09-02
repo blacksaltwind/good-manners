@@ -1,0 +1,25 @@
+schema_version: 1
+id: flow.retry
+version: 1
+title: Retry
+category: flow
+severity: must
+instruction: Provide an appropriate retry path for transient recoverable failures.
+tags:
+  - flow
+  - retry
+  - network
+  - error
+applies_when:
+  any:
+    - retry
+    - network
+    - error
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

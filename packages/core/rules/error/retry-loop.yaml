@@ -1,0 +1,22 @@
+schema_version: 1
+id: error.retry-loop
+version: 1
+title: Retry Loop
+category: error
+severity: must
+instruction: Do not trap users in an automatic or manual retry loop without an exit path.
+tags:
+  - error
+  - retry
+  - loop
+applies_when:
+  any:
+    - retry
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

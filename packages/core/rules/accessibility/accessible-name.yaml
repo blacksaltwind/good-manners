@@ -1,0 +1,25 @@
+schema_version: 1
+id: accessibility.accessible-name
+version: 1
+title: Accessible Name
+category: accessibility
+severity: must
+instruction: Interactive controls and form inputs must expose a meaningful accessible name.
+tags:
+  - accessibility
+  - accessible
+  - name
+  - interactive
+  - form
+applies_when:
+  any:
+    - interactive
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

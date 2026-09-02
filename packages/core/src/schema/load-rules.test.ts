@@ -18,7 +18,7 @@ describe('loadRulesDirectory', () => {
     const rules =
       await loadRulesDirectory(rulesDirectory)
 
-    expect(rules.length).toBe(11)
+    expect(rules.length).toBe(100)
 
     expect(
       rules.some(

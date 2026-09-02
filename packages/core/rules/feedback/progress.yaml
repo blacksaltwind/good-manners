@@ -1,0 +1,26 @@
+schema_version: 1
+id: feedback.progress
+version: 1
+title: Progress
+category: feedback
+severity: should
+instruction: Show useful progress for operations whose duration is noticeable or uncertain.
+tags:
+  - feedback
+  - progress
+  - async
+  - long-running
+  - upload
+applies_when:
+  any:
+    - async
+    - long-running
+    - upload
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

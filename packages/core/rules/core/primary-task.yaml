@@ -1,32 +1,21 @@
 schema_version: 1
 id: core.primary-task
 version: 1
-title: Make the primary task obvious
+title: Primary Task
 category: core
 severity: must
-
 instruction: Make the screen's primary user task and next action immediately identifiable.
-
 tags:
-  - hierarchy
-  - action
+  - core
+  - primary
   - task
-
 applies_when:
   any: []
   all: []
   none: []
-
-review:
-  question: Can the user immediately tell what this screen is for and what to do next?
-
 checks:
   deterministic: []
   agent: true
   autofix: suggest
-
 exceptions: []
-
-related:
-  - core.action-hierarchy
-  - core.minimal-relevance
+related: []

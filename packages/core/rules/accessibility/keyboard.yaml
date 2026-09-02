@@ -1,0 +1,22 @@
+schema_version: 1
+id: accessibility.keyboard
+version: 1
+title: Keyboard
+category: accessibility
+severity: must
+instruction: All interactive functionality must be operable with a keyboard.
+tags:
+  - accessibility
+  - keyboard
+  - interactive
+applies_when:
+  any:
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

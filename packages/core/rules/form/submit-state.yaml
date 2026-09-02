@@ -1,0 +1,22 @@
+schema_version: 1
+id: form.submit-state
+version: 1
+title: Submit State
+category: form
+severity: must
+instruction: Make submission state clear and prevent accidental duplicate submission.
+tags:
+  - form
+  - submit
+  - state
+applies_when:
+  any:
+    - form
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

@@ -1,0 +1,23 @@
+schema_version: 1
+id: destructive.explicit-label
+version: 1
+title: Explicit Label
+category: destructive
+severity: must
+instruction: Name the destructive consequence explicitly in the action label or
+  confirmation.
+tags:
+  - destructive
+  - explicit
+  - label
+applies_when:
+  any:
+    - destructive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

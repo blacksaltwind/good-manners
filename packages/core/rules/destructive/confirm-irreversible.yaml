@@ -1,0 +1,22 @@
+schema_version: 1
+id: destructive.confirm-irreversible
+version: 1
+title: Confirm Irreversible
+category: destructive
+severity: must
+instruction: Require meaningful confirmation for irreversible high-impact actions.
+tags:
+  - destructive
+  - confirm
+  - irreversible
+applies_when:
+  any:
+    - destructive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

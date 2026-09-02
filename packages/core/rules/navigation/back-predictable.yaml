@@ -1,0 +1,22 @@
+schema_version: 1
+id: navigation.back-predictable
+version: 1
+title: Back Predictable
+category: navigation
+severity: must
+instruction: Back behavior should return users to the expected prior context.
+tags:
+  - navigation
+  - back
+  - predictable
+applies_when:
+  any:
+    - navigation
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

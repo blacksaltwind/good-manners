@@ -1,0 +1,27 @@
+schema_version: 1
+id: flow.cancellation
+version: 1
+title: Cancellation
+category: flow
+severity: should
+instruction: Allow users to cancel long or multi-step operations when
+  cancellation is meaningful.
+tags:
+  - flow
+  - cancellation
+  - multi-step
+  - long-running
+  - upload
+applies_when:
+  any:
+    - multi-step
+    - long-running
+    - upload
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []

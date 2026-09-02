@@ -1,0 +1,25 @@
+schema_version: 1
+id: navigation.link-vs-button
+version: 1
+title: Link Vs Button
+category: navigation
+severity: must
+instruction: Use navigation controls for navigation and action controls for actions.
+tags:
+  - navigation
+  - link
+  - vs
+  - button
+  - interactive
+applies_when:
+  any:
+    - navigation
+    - interactive
+  all: []
+  none: []
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+exceptions: []
+related: []
