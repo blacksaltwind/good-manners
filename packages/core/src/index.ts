@@ -52,3 +52,14 @@ export {
 export {
   shouldActivate,
 } from './signals/should-activate.js'
+
+
+export {
+  buildReviewContext,
+} from './context-packet/review-context.js'
+
+export type {
+  ReviewIssue,
+  BuildReviewContextInput,
+  BuildReviewContextResult,
+} from './context-packet/review-context.js'
