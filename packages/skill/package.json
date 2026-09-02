@@ -1,0 +1,9 @@
+{
+  "name": "@good-manners/skill",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx src/build-skill.ts"
+  }
+}
