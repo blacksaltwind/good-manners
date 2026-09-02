@@ -4,6 +4,11 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
+import {
+  installClaudeStopHook,
+  removeClaudeStopHook,
+} from './claude-settings.js'
+
 import { checkPath } from '@good-manners/checker'
 
 type Command =
@@ -869,6 +874,94 @@ async function check(
   process.exitCode = 1
 }
 
+function getClaudeIntegrationPaths() {
+  const skillDirectory =
+    path.join(
+      os.homedir(),
+      '.claude',
+      'skills',
+      'good-manners',
+    )
+
+  return {
+    skillDirectory,
+    settingsPath:
+      path.join(
+        os.homedir(),
+        '.claude',
+        'settings.json',
+      ),
+    hookPath:
+      path.join(
+        skillDirectory,
+        'scripts',
+        'claude-code-stop.mjs',
+      ),
+  }
+}
+
+async function configureClaudeIntegration(
+  dryRun: boolean,
+) {
+  if (dryRun) {
+    return
+  }
+
+  const {
+    skillDirectory,
+    settingsPath,
+    hookPath,
+  } = getClaudeIntegrationPaths()
+
+  const marker =
+    await readMarker(
+      skillDirectory,
+    )
+
+  if (!marker) {
+    return
+  }
+
+  if (
+    !(await pathExists(hookPath))
+  ) {
+    return
+  }
+
+  await installClaudeStopHook({
+    settingsPath,
+    hookPath,
+  })
+}
+
+async function removeClaudeIntegration(
+  dryRun: boolean,
+) {
+  if (dryRun) {
+    return
+  }
+
+  const {
+    skillDirectory,
+    settingsPath,
+    hookPath,
+  } = getClaudeIntegrationPaths()
+
+  const marker =
+    await readMarker(
+      skillDirectory,
+    )
+
+  if (!marker) {
+    return
+  }
+
+  await removeClaudeStopHook({
+    settingsPath,
+    hookPath,
+  })
+}
+
 function parseCommand(): {
   command: Command
   dryRun: boolean
@@ -921,6 +1014,7 @@ async function main() {
 
   if (command === 'install') {
     await install(dryRun)
+    await configureClaudeIntegration(dryRun)
     return
   }
 
@@ -931,6 +1025,7 @@ async function main() {
 
   if (command === 'update') {
     await install(dryRun)
+    await configureClaudeIntegration(dryRun)
     return
   }
 
@@ -950,6 +1045,7 @@ async function main() {
     return
   }
 
+  await removeClaudeIntegration(dryRun)
   await uninstall(dryRun)
 }
 

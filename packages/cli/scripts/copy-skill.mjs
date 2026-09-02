@@ -70,6 +70,32 @@ await fs.cp(
   },
 )
 
+const claudeHookSource = path.join(
+  repoRoot,
+  'packages',
+  'adapters',
+  'claude-code',
+  'stop-hook.mjs',
+)
+
+const claudeHookDestination = path.join(
+  destination,
+  'scripts',
+  'claude-code-stop.mjs',
+)
+
+await fs.mkdir(
+  path.dirname(claudeHookDestination),
+  {
+    recursive: true,
+  },
+)
+
+await fs.copyFile(
+  claudeHookSource,
+  claudeHookDestination,
+)
+
 console.log(
   'Bundled Good Manners skill into CLI package',
 )
