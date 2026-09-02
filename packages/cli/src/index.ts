@@ -19,10 +19,16 @@ import { checkPath } from '../../checker/src/index.js'
 
 import { getRulesOutput } from './rules.js'
 
+import {
+  formatEvalReport,
+  runGoodMannersEval,
+} from './eval.js'
+
 type Command =
   | 'install'
   | 'check'
   | 'rules'
+  | 'eval'
   | 'status'
   | 'update'
   | 'uninstall'
@@ -1121,6 +1127,7 @@ function printHelp() {
       '  good-manners uninstall [--dry-run]',
       '  good-manners check [path]',
       '  good-manners rules [query]',
+      '  good-manners eval [--json]',
       '  good-manners --version',
       '',
       'Good UX is just good manners.',
@@ -1131,6 +1138,7 @@ function printHelp() {
 type ParsedCommand = {
   command: Command
   dryRun: boolean
+  json: boolean
   args: string[]
 }
 
@@ -1139,6 +1147,7 @@ function parseCommand(): ParsedCommand {
 
   const allowedFlags = new Set([
     '--dry-run',
+    '--json',
     '--help',
     '-h',
     '--version',
@@ -1166,6 +1175,7 @@ function parseCommand(): ParsedCommand {
     return {
       command: 'help',
       dryRun: false,
+      json: false,
       args: [],
     }
   }
@@ -1177,11 +1187,13 @@ function parseCommand(): ParsedCommand {
     return {
       command: 'version',
       dryRun: false,
+      json: false,
       args: [],
     }
   }
 
   const dryRun = argv.includes('--dry-run')
+  const json = argv.includes('--json')
 
   const positional = argv.filter(
     (arg) => !arg.startsWith('-'),
@@ -1193,6 +1205,7 @@ function parseCommand(): ParsedCommand {
     'install',
     'check',
     'rules',
+    'eval',
     'status',
     'update',
     'uninstall',
@@ -1204,9 +1217,21 @@ function parseCommand(): ParsedCommand {
     process.exit(1)
   }
 
+  if (
+    json &&
+    raw !== 'eval'
+  ) {
+    console.error(
+      '--json is only valid with good-manners eval.',
+    )
+    printHelp()
+    process.exit(1)
+  }
+
   return {
     command: raw as Command,
     dryRun,
+    json,
     args: positional.slice(1),
   }
 }
@@ -1215,6 +1240,7 @@ async function main() {
   const {
     command,
     dryRun,
+    json,
     args,
   } = parseCommand()
 
@@ -1258,6 +1284,43 @@ async function main() {
         args.join(' '),
       ),
     )
+    return
+  }
+
+  if (command === 'eval') {
+    try {
+      const report =
+        await runGoodMannersEval()
+
+      console.log(
+        json
+          ? JSON.stringify(
+              report,
+              null,
+              2,
+            )
+          : formatEvalReport(
+              report,
+            ),
+      )
+
+      process.exitCode =
+        report.passed
+          ? 0
+          : 1
+    } catch (error) {
+      console.error(
+        'Good Manners eval failed: ' +
+        (
+          error instanceof Error
+            ? error.message
+            : String(error)
+        ),
+      )
+
+      process.exitCode = 2
+    }
+
     return
   }
 
