@@ -1,0 +1,30 @@
+schema_version: 1
+id: core.consistency
+version: 1
+title: Maintain consistency
+category: core
+severity: should
+
+instruction: Use consistent labels, controls, behaviors, and established platform conventions.
+
+tags:
+  - consistency
+  - conventions
+
+applies_when:
+  any: []
+  all: []
+  none: []
+
+review:
+  question: Does the interface behave differently from similar controls without a good reason?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - cognitive.consistent-terms

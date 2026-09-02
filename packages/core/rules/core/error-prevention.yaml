@@ -1,0 +1,34 @@
+schema_version: 1
+id: core.error-prevention
+version: 1
+title: Prevent likely errors
+category: core
+severity: must
+
+instruction: Prevent likely user errors when prevention is practical.
+
+tags:
+  - error
+  - prevention
+  - validation
+
+applies_when:
+  any:
+    - mutation
+    - form
+    - destructive
+  all: []
+  none: []
+
+review:
+  question: Can this interface prevent a likely mistake instead of merely reporting it afterward?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - flow.validation-failure

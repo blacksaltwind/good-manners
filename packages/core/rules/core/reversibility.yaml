@@ -1,0 +1,34 @@
+schema_version: 1
+id: core.reversibility
+version: 1
+title: Prefer reversible actions
+category: core
+severity: should
+
+instruction: Make consequential reversible actions undoable when practical.
+
+tags:
+  - undo
+  - recovery
+  - destructive
+
+applies_when:
+  any:
+    - destructive
+    - mutation
+  all: []
+  none:
+    - irreversible
+
+review:
+  question: Could this action offer undo instead of forcing the user to permanently commit immediately?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - destructive.prefer-undo

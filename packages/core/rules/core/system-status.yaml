@@ -1,0 +1,35 @@
+schema_version: 1
+id: core.system-status
+version: 1
+title: Keep users informed about system status
+category: core
+severity: must
+
+instruction: Keep users informed when the system changes state or is processing their action.
+
+tags:
+  - feedback
+  - status
+  - async
+
+applies_when:
+  any:
+    - async
+    - mutation
+    - long-running
+  all: []
+  none: []
+
+review:
+  question: Can the user tell what the system is currently doing?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - feedback.immediate
+  - flow.loading

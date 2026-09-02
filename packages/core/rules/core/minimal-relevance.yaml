@@ -1,0 +1,31 @@
+schema_version: 1
+id: core.minimal-relevance
+version: 1
+title: Keep interfaces relevant
+category: core
+severity: should
+
+instruction: Remove UI that does not help the current task, decision, status, or navigation.
+
+tags:
+  - hierarchy
+  - cognitive
+  - simplicity
+
+applies_when:
+  any: []
+  all: []
+  none: []
+
+review:
+  question: Does every visible element help the user's current task or understanding?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - core.primary-task

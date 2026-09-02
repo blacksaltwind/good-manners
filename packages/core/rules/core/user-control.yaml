@@ -1,0 +1,36 @@
+schema_version: 1
+id: core.user-control
+version: 1
+title: Keep users in control
+category: core
+severity: must
+
+instruction: Provide a clear escape, back, cancel, or exit path when users enter a reversible flow.
+
+tags:
+  - control
+  - cancel
+  - navigation
+  - flow
+
+applies_when:
+  any:
+    - flow
+    - overlay
+    - multi-step
+  all: []
+  none: []
+
+review:
+  question: Can the user leave or reverse this flow without being trapped?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - flow.cancellation
+  - core.reversibility

@@ -1,0 +1,31 @@
+schema_version: 1
+id: core.action-hierarchy
+version: 1
+title: Maintain clear action hierarchy
+category: core
+severity: should
+
+instruction: Avoid multiple visually competing primary actions in the same decision context.
+
+tags:
+  - hierarchy
+  - action
+  - buttons
+
+applies_when:
+  any: []
+  all: []
+  none: []
+
+review:
+  question: Are multiple actions competing for the user's attention?
+
+checks:
+  deterministic: []
+  agent: true
+  autofix: suggest
+
+exceptions: []
+
+related:
+  - core.primary-task
