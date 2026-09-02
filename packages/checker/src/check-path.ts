@@ -15,6 +15,10 @@ const SUPPORTED_EXTENSIONS =
     '.htm',
     '.jsx',
     '.tsx',
+    '.css',
+    '.scss',
+    '.sass',
+    '.less',
   ])
 
 const SKIP_DIRECTORIES =
@@ -24,6 +28,11 @@ const SKIP_DIRECTORIES =
     'dist',
     'build',
     'coverage',
+    '.next',
+    'out',
+    '.cache',
+    '.turbo',
+    '.vercel',
   ])
 
 async function collectFiles(
