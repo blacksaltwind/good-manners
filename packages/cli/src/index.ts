@@ -5,8 +5,8 @@ import os from 'node:os'
 import path from 'node:path'
 
 import {
-  installClaudeStopHook,
-  removeClaudeStopHook,
+  installClaudeReviewHooks,
+  removeClaudeReviewHooks,
 } from './claude-settings.js'
 
 import { checkPath } from '@good-manners/checker'
@@ -891,11 +891,17 @@ function getClaudeIntegrationPaths() {
         '.claude',
         'settings.json',
       ),
-    hookPath:
+    stopHookPath:
       path.join(
         skillDirectory,
         'scripts',
         'claude-code-stop.mjs',
+      ),
+    turnStartHookPath:
+      path.join(
+        skillDirectory,
+        'scripts',
+        'claude-code-turn-start.mjs',
       ),
   }
 }
@@ -910,7 +916,8 @@ async function configureClaudeIntegration(
   const {
     skillDirectory,
     settingsPath,
-    hookPath,
+    stopHookPath,
+    turnStartHookPath,
   } = getClaudeIntegrationPaths()
 
   const marker =
@@ -923,14 +930,16 @@ async function configureClaudeIntegration(
   }
 
   if (
-    !(await pathExists(hookPath))
+    !(await pathExists(stopHookPath)) ||
+    !(await pathExists(turnStartHookPath))
   ) {
     return
   }
 
-  await installClaudeStopHook({
+  await installClaudeReviewHooks({
     settingsPath,
-    hookPath,
+    stopHookPath,
+    turnStartHookPath,
   })
 }
 
@@ -944,7 +953,8 @@ async function removeClaudeIntegration(
   const {
     skillDirectory,
     settingsPath,
-    hookPath,
+    stopHookPath,
+    turnStartHookPath,
   } = getClaudeIntegrationPaths()
 
   const marker =
@@ -956,9 +966,10 @@ async function removeClaudeIntegration(
     return
   }
 
-  await removeClaudeStopHook({
+  await removeClaudeReviewHooks({
     settingsPath,
-    hookPath,
+    stopHookPath,
+    turnStartHookPath,
   })
 }
 

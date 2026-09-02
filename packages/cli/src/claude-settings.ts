@@ -3,8 +3,22 @@ import path from 'node:path'
 
 type JsonObject = Record<string, unknown>
 
-type InstallClaudeStopHookInput = {
+type ClaudeHookInput = {
   settingsPath: string
+  hookPath: string
+}
+
+type ClaudeReviewHooksInput = {
+  settingsPath: string
+  stopHookPath: string
+  turnStartHookPath: string
+}
+
+type HookSpec = {
+  eventName:
+    | 'SessionStart'
+    | 'UserPromptSubmit'
+    | 'Stop'
   hookPath: string
 }
 
@@ -106,71 +120,121 @@ function isGoodMannersHandler(
   )
 }
 
-export async function installClaudeStopHook({
-  settingsPath,
-  hookPath,
-}: InstallClaudeStopHookInput) {
-  const settings =
-    await readSettings(
-      settingsPath,
-    )
-
-  let hooks: JsonObject
-
+function hooksObject(
+  settings: JsonObject,
+): JsonObject {
   if (settings.hooks === undefined) {
-    hooks = {}
+    const hooks: JsonObject = {}
     settings.hooks = hooks
-  } else if (isObject(settings.hooks)) {
-    hooks = settings.hooks
-  } else {
+    return hooks
+  }
+
+  if (!isObject(settings.hooks)) {
     throw new Error(
       'Claude settings "hooks" must be an object.',
     )
   }
 
-  let stop: unknown[]
+  return settings.hooks
+}
 
-  if (hooks.Stop === undefined) {
-    stop = []
-    hooks.Stop = stop
-  } else if (Array.isArray(hooks.Stop)) {
-    stop = hooks.Stop
-  } else {
+function eventArray(
+  hooks: JsonObject,
+  eventName: string,
+): unknown[] {
+  const current =
+    hooks[eventName]
+
+  if (current === undefined) {
+    const created: unknown[] = []
+    hooks[eventName] = created
+    return created
+  }
+
+  if (!Array.isArray(current)) {
     throw new Error(
-      'Claude settings hooks.Stop must be an array.',
+      `Claude settings hooks.${eventName} must be an array.`,
     )
   }
 
-  const alreadyInstalled =
-    stop.some((group) => {
-      if (!isObject(group)) {
-        return false
-      }
+  return current
+}
 
-      if (!Array.isArray(group.hooks)) {
-        return false
-      }
+function handlerExists(
+  groups: unknown[],
+  hookPath: string,
+) {
+  return groups.some((group) => {
+    if (
+      !isObject(group) ||
+      !Array.isArray(group.hooks)
+    ) {
+      return false
+    }
 
-      return group.hooks.some(
-        (handler) =>
-          isGoodMannersHandler(
-            handler,
-            hookPath,
-          ),
-      )
-    })
+    return group.hooks.some(
+      (handler) =>
+        isGoodMannersHandler(
+          handler,
+          hookPath,
+        ),
+    )
+  })
+}
 
-  if (alreadyInstalled) {
-    return false
+async function installHookSpecs(
+  settingsPath: string,
+  specs: HookSpec[],
+) {
+  const settings =
+    await readSettings(settingsPath)
+
+  const hooks =
+    hooksObject(settings)
+
+  const events =
+    new Map<string, unknown[]>()
+
+  // Validate every target event before writing anything.
+  for (const spec of specs) {
+    events.set(
+      spec.eventName,
+      eventArray(
+        hooks,
+        spec.eventName,
+      ),
+    )
   }
 
-  stop.push({
-    hooks: [
-      goodMannersHandler(
-        hookPath,
-      ),
-    ],
-  })
+  let changed = false
+
+  for (const spec of specs) {
+    const groups =
+      events.get(spec.eventName)!
+
+    if (
+      handlerExists(
+        groups,
+        spec.hookPath,
+      )
+    ) {
+      continue
+    }
+
+    groups.push({
+      hooks: [
+        goodMannersHandler(
+          spec.hookPath,
+        ),
+      ],
+    })
+
+    changed = true
+  }
+
+  if (!changed) {
+    return false
+  }
 
   await writeSettings(
     settingsPath,
@@ -180,37 +244,19 @@ export async function installClaudeStopHook({
   return true
 }
 
-export async function removeClaudeStopHook({
-  settingsPath,
-  hookPath,
-}: InstallClaudeStopHookInput) {
-  const settings =
-    await readSettings(
-      settingsPath,
-    )
-
-  if (!isObject(settings.hooks)) {
-    return false
-  }
-
-  const hooks = settings.hooks
-
-  if (!Array.isArray(hooks.Stop)) {
-    return false
-  }
-
+function removeOwnedHandler(
+  groups: unknown[],
+  hookPath: string,
+) {
   let changed = false
+  const nextGroups: unknown[] = []
 
-  const nextStop: unknown[] = []
-
-  for (const group of hooks.Stop) {
-    if (!isObject(group)) {
-      nextStop.push(group)
-      continue
-    }
-
-    if (!Array.isArray(group.hooks)) {
-      nextStop.push(group)
+  for (const group of groups) {
+    if (
+      !isObject(group) ||
+      !Array.isArray(group.hooks)
+    ) {
+      nextGroups.push(group)
       continue
     }
 
@@ -232,21 +278,65 @@ export async function removeClaudeStopHook({
       )
 
     if (nextHandlers.length > 0) {
-      nextStop.push({
+      nextGroups.push({
         ...group,
         hooks: nextHandlers,
       })
     }
   }
 
-  if (!changed) {
+  return {
+    changed,
+    groups: nextGroups,
+  }
+}
+
+async function removeHookSpecs(
+  settingsPath: string,
+  specs: HookSpec[],
+) {
+  const settings =
+    await readSettings(settingsPath)
+
+  if (!isObject(settings.hooks)) {
     return false
   }
 
-  if (nextStop.length > 0) {
-    hooks.Stop = nextStop
-  } else {
-    delete hooks.Stop
+  const hooks =
+    settings.hooks
+
+  let changed = false
+
+  for (const spec of specs) {
+    const current =
+      hooks[spec.eventName]
+
+    if (!Array.isArray(current)) {
+      continue
+    }
+
+    const result =
+      removeOwnedHandler(
+        current,
+        spec.hookPath,
+      )
+
+    if (!result.changed) {
+      continue
+    }
+
+    changed = true
+
+    if (result.groups.length > 0) {
+      hooks[spec.eventName] =
+        result.groups
+    } else {
+      delete hooks[spec.eventName]
+    }
+  }
+
+  if (!changed) {
+    return false
   }
 
   if (
@@ -261,4 +351,82 @@ export async function removeClaudeStopHook({
   )
 
   return true
+}
+
+export async function installClaudeStopHook({
+  settingsPath,
+  hookPath,
+}: ClaudeHookInput) {
+  return installHookSpecs(
+    settingsPath,
+    [
+      {
+        eventName: 'Stop',
+        hookPath,
+      },
+    ],
+  )
+}
+
+export async function removeClaudeStopHook({
+  settingsPath,
+  hookPath,
+}: ClaudeHookInput) {
+  return removeHookSpecs(
+    settingsPath,
+    [
+      {
+        eventName: 'Stop',
+        hookPath,
+      },
+    ],
+  )
+}
+
+export async function installClaudeReviewHooks({
+  settingsPath,
+  stopHookPath,
+  turnStartHookPath,
+}: ClaudeReviewHooksInput) {
+  return installHookSpecs(
+    settingsPath,
+    [
+      {
+        eventName: 'SessionStart',
+        hookPath: turnStartHookPath,
+      },
+      {
+        eventName: 'UserPromptSubmit',
+        hookPath: turnStartHookPath,
+      },
+      {
+        eventName: 'Stop',
+        hookPath: stopHookPath,
+      },
+    ],
+  )
+}
+
+export async function removeClaudeReviewHooks({
+  settingsPath,
+  stopHookPath,
+  turnStartHookPath,
+}: ClaudeReviewHooksInput) {
+  return removeHookSpecs(
+    settingsPath,
+    [
+      {
+        eventName: 'SessionStart',
+        hookPath: turnStartHookPath,
+      },
+      {
+        eventName: 'UserPromptSubmit',
+        hookPath: turnStartHookPath,
+      },
+      {
+        eventName: 'Stop',
+        hookPath: stopHookPath,
+      },
+    ],
+  )
 }

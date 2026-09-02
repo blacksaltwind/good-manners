@@ -96,6 +96,45 @@ await fs.copyFile(
   claudeHookDestination,
 )
 
+
+const claudeTurnStartSource = path.join(
+  repoRoot,
+  'packages',
+  'adapters',
+  'claude-code',
+  'turn-start.mjs',
+)
+
+const claudeTurnStartDestination = path.join(
+  destination,
+  'scripts',
+  'claude-code-turn-start.mjs',
+)
+
+await fs.copyFile(
+  claudeTurnStartSource,
+  claudeTurnStartDestination,
+)
+
+const claudeSessionStateSource = path.join(
+  repoRoot,
+  'packages',
+  'adapters',
+  'claude-code',
+  'session-state.mjs',
+)
+
+const claudeSessionStateDestination = path.join(
+  destination,
+  'scripts',
+  'session-state.mjs',
+)
+
+await fs.copyFile(
+  claudeSessionStateSource,
+  claudeSessionStateDestination,
+)
+
 console.log(
   'Bundled Good Manners skill into CLI package',
 )
