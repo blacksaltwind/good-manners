@@ -233,27 +233,30 @@ async function installTarget(
       target.directory,
     )
 
-  if (exists) {
-    const marker =
-      await readMarker(
-        target.directory,
-      )
+  const previousMarker =
+    exists
+      ? await readMarker(
+          target.directory,
+        )
+      : null
 
-    if (!marker) {
-      console.log(
-        `skip  ${target.name}`,
-      )
+  if (
+    exists &&
+    !previousMarker
+  ) {
+    console.log(
+      `skip  ${target.name}`,
+    )
 
-      console.log(
-        `      ${target.directory}`,
-      )
+    console.log(
+      `      ${target.directory}`,
+    )
 
-      console.log(
-        '      existing directory is not owned by Good Manners',
-      )
+    console.log(
+      '      existing directory is not owned by Good Manners',
+    )
 
-      return
-    }
+    return
   }
 
   console.log(
@@ -268,14 +271,266 @@ async function installTarget(
     return
   }
 
-  if (exists) {
-    const marker =
-      await readMarker(
+  const targetParent =
+    path.dirname(
+      target.directory,
+    )
+
+  await fs.mkdir(
+    targetParent,
+    {
+      recursive: true,
+    },
+  )
+
+  const stageContainer =
+    await fs.mkdtemp(
+      path.join(
+        targetParent,
+        '.good-manners-stage-',
+      ),
+    )
+
+  const backupContainer =
+    await fs.mkdtemp(
+      path.join(
+        targetParent,
+        '.good-manners-backup-',
+      ),
+    )
+
+  const stageRoot =
+    path.join(
+      stageContainer,
+      'good-manners',
+    )
+
+  const backupRoot =
+    path.join(
+      backupContainer,
+      'good-manners',
+    )
+
+  let newFiles: string[] = []
+  let mutationStarted = false
+
+  try {
+    await fs.cp(
+      skillSource,
+      stageRoot,
+      {
+        recursive: true,
+      },
+    )
+
+    newFiles =
+      await listOwnedFiles(
+        stageRoot,
+      )
+
+    const previousFiles =
+      previousMarker?.files ?? []
+
+    const previousOwned =
+      new Set(
+        previousFiles,
+      )
+
+    /*
+     * A newly introduced Good Manners file must not
+     * overwrite a user-owned file that happens to use
+     * the same path.
+     */
+    for (
+      const relativePath of newFiles
+    ) {
+      if (
+        previousOwned.has(
+          relativePath,
+        )
+      ) {
+        continue
+      }
+
+      const destination =
+        path.join(
+          target.directory,
+          relativePath,
+        )
+
+      if (
+        await pathExists(
+          destination,
+        )
+      ) {
+        throw new Error(
+          `Refusing to overwrite unowned file: ${destination}`,
+        )
+      }
+    }
+
+    /*
+     * Back up only files already owned by Good Manners.
+     * Unknown files are deliberately untouched.
+     */
+    for (
+      const relativePath of previousFiles
+    ) {
+      const source =
+        path.join(
+          target.directory,
+          relativePath,
+        )
+
+      if (
+        !(await pathExists(source))
+      ) {
+        continue
+      }
+
+      const backup =
+        path.join(
+          backupRoot,
+          relativePath,
+        )
+
+      await fs.mkdir(
+        path.dirname(backup),
+        {
+          recursive: true,
+        },
+      )
+
+      await fs.copyFile(
+        source,
+        backup,
+      )
+    }
+
+    mutationStarted = true
+
+    await fs.mkdir(
+      target.directory,
+      {
+        recursive: true,
+      },
+    )
+
+    const newFileSet =
+      new Set(newFiles)
+
+    /*
+     * Remove owned files that disappeared from the new
+     * release. User files are never in previousFiles.
+     */
+    for (
+      const relativePath of previousFiles
+    ) {
+      if (
+        newFileSet.has(
+          relativePath,
+        )
+      ) {
+        continue
+      }
+
+      await fs.rm(
+        path.join(
+          target.directory,
+          relativePath,
+        ),
+        {
+          force: true,
+        },
+      )
+    }
+
+    /*
+     * Copy the completely staged release into the live
+     * installation one file at a time.
+     */
+    for (
+      const relativePath of newFiles
+    ) {
+      const source =
+        path.join(
+          stageRoot,
+          relativePath,
+        )
+
+      const destination =
+        path.join(
+          target.directory,
+          relativePath,
+        )
+
+      await fs.mkdir(
+        path.dirname(
+          destination,
+        ),
+        {
+          recursive: true,
+        },
+      )
+
+      await fs.copyFile(
+        source,
+        destination,
+      )
+    }
+
+    const marker: InstallMarker = {
+      owner: 'good-manners',
+      version: VERSION,
+      installedAt:
+        previousMarker?.installedAt ??
+        new Date().toISOString(),
+      files: newFiles,
+    }
+
+    const finalMarker =
+      markerPath(
         target.directory,
       )
 
-    if (marker) {
-      for (const relativePath of marker.files) {
+    const temporaryMarker =
+      `${finalMarker}.tmp`
+
+    await fs.writeFile(
+      temporaryMarker,
+      JSON.stringify(
+        marker,
+        null,
+        2,
+      ) + '\n',
+    )
+
+    /*
+     * Commit ownership metadata last.
+     */
+    await fs.rename(
+      temporaryMarker,
+      finalMarker,
+    )
+  } catch (error) {
+    if (mutationStarted) {
+      const previousFiles =
+        previousMarker?.files ?? []
+
+      const rollbackFiles =
+        new Set([
+          ...previousFiles,
+          ...newFiles,
+        ])
+
+      /*
+       * Remove files written by the failed attempt,
+       * then restore the previous owned files.
+       * Unknown files are untouched.
+       */
+      for (
+        const relativePath of rollbackFiles
+      ) {
         await fs.rm(
           path.join(
             target.directory,
@@ -286,49 +541,96 @@ async function installTarget(
           },
         )
       }
+
+      for (
+        const relativePath of previousFiles
+      ) {
+        const backup =
+          path.join(
+            backupRoot,
+            relativePath,
+          )
+
+        if (
+          !(await pathExists(backup))
+        ) {
+          continue
+        }
+
+        const destination =
+          path.join(
+            target.directory,
+            relativePath,
+          )
+
+        await fs.mkdir(
+          path.dirname(
+            destination,
+          ),
+          {
+            recursive: true,
+          },
+        )
+
+        await fs.copyFile(
+          backup,
+          destination,
+        )
+      }
+
+      const finalMarker =
+        markerPath(
+          target.directory,
+        )
+
+      await fs.rm(
+        `${finalMarker}.tmp`,
+        {
+          force: true,
+        },
+      )
+
+      if (previousMarker) {
+        await fs.writeFile(
+          finalMarker,
+          JSON.stringify(
+            previousMarker,
+            null,
+            2,
+          ) + '\n',
+        )
+      } else {
+        await fs.rm(
+          finalMarker,
+          {
+            force: true,
+          },
+        )
+
+        await removeEmptyDirectories(
+          target.directory,
+        )
+      }
     }
-  }
 
-  await fs.mkdir(
-    path.dirname(
-      target.directory,
-    ),
-    {
-      recursive: true,
-    },
-  )
-
-  await fs.cp(
-    skillSource,
-    target.directory,
-    {
-      recursive: true,
-    },
-  )
-
-  const files =
-    await listOwnedFiles(
-      target.directory,
+    throw error
+  } finally {
+    await fs.rm(
+      stageContainer,
+      {
+        recursive: true,
+        force: true,
+      },
     )
 
-  const marker: InstallMarker = {
-    owner: 'good-manners',
-    version: VERSION,
-    installedAt:
-      new Date().toISOString(),
-    files,
+    await fs.rm(
+      backupContainer,
+      {
+        recursive: true,
+        force: true,
+      },
+    )
   }
-
-  await fs.writeFile(
-    markerPath(
-      target.directory,
-    ),
-    JSON.stringify(
-      marker,
-      null,
-      2,
-    ) + '\n',
-  )
 }
 
 async function install(
