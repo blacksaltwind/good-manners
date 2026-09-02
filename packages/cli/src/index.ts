@@ -174,6 +174,33 @@ async function removeEmptyDirectories(
   }
 }
 
+function isSafeOwnedPath(
+  value: unknown,
+): value is string {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.includes('\0') ||
+    path.isAbsolute(value)
+  ) {
+    return false
+  }
+
+  const normalized = path.normalize(value)
+
+  if (
+    normalized === '.' ||
+    normalized === '..' ||
+    normalized.startsWith(
+      `..${path.sep}`,
+    )
+  ) {
+    return false
+  }
+
+  return true
+}
+
 async function readMarker(
   directory: string,
 ): Promise<InstallMarker | null> {
@@ -188,7 +215,8 @@ async function readMarker(
 
     if (
       parsed.owner !== 'good-manners' ||
-      !Array.isArray(parsed.files)
+      !Array.isArray(parsed.files) ||
+      !parsed.files.every(isSafeOwnedPath)
     ) {
       return null
     }
