@@ -7,6 +7,7 @@ import path from 'node:path'
 type Command =
   | 'install'
   | 'status'
+  | 'update'
   | 'uninstall'
 
 type Target = {
@@ -267,13 +268,26 @@ async function installTarget(
     return
   }
 
-  await fs.rm(
-    target.directory,
-    {
-      recursive: true,
-      force: true,
-    },
-  )
+  if (exists) {
+    const marker =
+      await readMarker(
+        target.directory,
+      )
+
+    if (marker) {
+      for (const relativePath of marker.files) {
+        await fs.rm(
+          path.join(
+            target.directory,
+            relativePath,
+          ),
+          {
+            force: true,
+          },
+        )
+      }
+    }
+  }
 
   await fs.mkdir(
     path.dirname(
@@ -492,6 +506,7 @@ function parseCommand(): {
   if (
     raw !== 'install' &&
     raw !== 'status' &&
+    raw !== 'update' &&
     raw !== 'uninstall'
   ) {
     console.error(
@@ -499,7 +514,7 @@ function parseCommand(): {
     )
 
     console.error(
-      'Usage: good-manners [install|status|uninstall] [--dry-run]',
+      'Usage: good-manners [install|status|update|uninstall] [--dry-run]',
     )
 
     process.exit(1)
@@ -524,6 +539,11 @@ async function main() {
 
   if (command === 'status') {
     await status()
+    return
+  }
+
+  if (command === 'update') {
+    await install(dryRun)
     return
   }
 
