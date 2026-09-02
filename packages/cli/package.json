@@ -18,6 +18,7 @@
   "scripts": {
     "build": "pnpm --filter @good-manners/skill build && tsc -p tsconfig.json && node scripts/copy-skill.mjs",
     "dev": "tsx src/index.ts",
-    "prepack": "pnpm run build"
+    "prepack": "pnpm run build",
+    "test:installer": "pnpm run build && node scripts/test-installer.mjs"
   }
 }

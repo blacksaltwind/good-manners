@@ -18,6 +18,7 @@ type InstallMarker = {
   owner: 'good-manners'
   version: string
   installedAt: string
+  files: string[]
 }
 
 const VERSION = '0.0.1'
@@ -82,6 +83,96 @@ async function pathExists(
   }
 }
 
+async function listOwnedFiles(
+  root: string,
+): Promise<string[]> {
+  const files: string[] = []
+
+  async function walk(
+    directory: string,
+  ) {
+    const entries =
+      await fs.readdir(
+        directory,
+        {
+          withFileTypes: true,
+        },
+      )
+
+    for (const entry of entries) {
+      const absolute =
+        path.join(
+          directory,
+          entry.name,
+        )
+
+      if (entry.isDirectory()) {
+        await walk(absolute)
+        continue
+      }
+
+      if (!entry.isFile()) {
+        continue
+      }
+
+      if (
+        entry.name ===
+        '.good-manners-install.json'
+      ) {
+        continue
+      }
+
+      files.push(
+        path.relative(
+          root,
+          absolute,
+        ),
+      )
+    }
+  }
+
+  await walk(root)
+
+  return files.sort()
+}
+
+async function removeEmptyDirectories(
+  root: string,
+) {
+  if (
+    !(await pathExists(root))
+  ) {
+    return
+  }
+
+  const entries =
+    await fs.readdir(
+      root,
+      {
+        withFileTypes: true,
+      },
+    )
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue
+    }
+
+    await removeEmptyDirectories(
+      path.join(
+        root,
+        entry.name,
+      ),
+    )
+  }
+
+  try {
+    await fs.rmdir(root)
+  } catch {
+    // Preserve directories containing unowned files.
+  }
+}
+
 async function readMarker(
   directory: string,
 ): Promise<InstallMarker | null> {
@@ -95,7 +186,8 @@ async function readMarker(
       JSON.parse(raw) as Partial<InstallMarker>
 
     if (
-      parsed.owner !== 'good-manners'
+      parsed.owner !== 'good-manners' ||
+      !Array.isArray(parsed.files)
     ) {
       return null
     }
@@ -200,11 +292,17 @@ async function installTarget(
     },
   )
 
+  const files =
+    await listOwnedFiles(
+      target.directory,
+    )
+
   const marker: InstallMarker = {
     owner: 'good-manners',
     version: VERSION,
     installedAt:
       new Date().toISOString(),
+    files,
   }
 
   await fs.writeFile(
@@ -332,12 +430,29 @@ async function uninstallTarget(
     return
   }
 
+  for (const relativePath of marker.files) {
+    await fs.rm(
+      path.join(
+        target.directory,
+        relativePath,
+      ),
+      {
+        force: true,
+      },
+    )
+  }
+
   await fs.rm(
-    target.directory,
+    markerPath(
+      target.directory,
+    ),
     {
-      recursive: true,
       force: true,
     },
+  )
+
+  await removeEmptyDirectories(
+    target.directory,
   )
 }
 
