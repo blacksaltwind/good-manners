@@ -2,6 +2,7 @@
 
 import {
   captureUiState,
+  cleanupSessionStates,
   writeSessionState,
 } from './session-state.mjs'
 
@@ -51,17 +52,17 @@ if (
   process.exit(0)
 }
 
+await cleanupSessionStates()
+
 const files =
   await captureUiState(
     event.cwd,
   )
 
-if (files) {
-  await writeSessionState({
-    sessionId: event.session_id,
-    cwd: event.cwd,
-    files,
-  })
-}
+await writeSessionState({
+  sessionId: event.session_id,
+  cwd: event.cwd,
+  files,
+})
 
 process.stdout.write('{}\n')

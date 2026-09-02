@@ -31,6 +31,12 @@ const SKIP_PARTS = new Set([
   '.vercel',
 ])
 
+const DEFAULT_SESSION_MAX_AGE_MS =
+  7 * 24 * 60 * 60 * 1000
+
+const MAX_FALLBACK_FILES = 5000
+const MAX_FALLBACK_ENTRIES = 25000
+
 function isMeaningfulUiFile(filePath) {
   const normalized =
     filePath.replaceAll('\\', '/')
@@ -64,6 +70,14 @@ function safeSessionId(value) {
   return value
 }
 
+function sessionsDirectory() {
+  return path.join(
+    os.homedir(),
+    '.good-manners',
+    'sessions',
+  )
+}
+
 function statePath(sessionId) {
   const safe = safeSessionId(sessionId)
 
@@ -72,9 +86,7 @@ function statePath(sessionId) {
   }
 
   return path.join(
-    os.homedir(),
-    '.good-manners',
-    'sessions',
+    sessionsDirectory(),
     `${safe}.json`,
   )
 }
@@ -115,6 +127,106 @@ function gitFiles(cwd) {
   }
 }
 
+async function fallbackFiles(cwd) {
+  const files = []
+  let visitedEntries = 0
+
+  async function walk(
+    absoluteDirectory,
+    relativeDirectory,
+  ) {
+    if (
+      files.length >= MAX_FALLBACK_FILES ||
+      visitedEntries >= MAX_FALLBACK_ENTRIES
+    ) {
+      return
+    }
+
+    let entries
+
+    try {
+      entries =
+        await fs.readdir(
+          absoluteDirectory,
+          {
+            withFileTypes: true,
+          },
+        )
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      visitedEntries += 1
+
+      if (
+        files.length >= MAX_FALLBACK_FILES ||
+        visitedEntries >= MAX_FALLBACK_ENTRIES
+      ) {
+        return
+      }
+
+      if (entry.isSymbolicLink()) {
+        continue
+      }
+
+      const relativePath =
+        relativeDirectory
+          ? path.join(
+              relativeDirectory,
+              entry.name,
+            )
+          : entry.name
+
+      if (entry.isDirectory()) {
+        if (
+          SKIP_PARTS.has(
+            entry.name,
+          )
+        ) {
+          continue
+        }
+
+        await walk(
+          path.join(
+            absoluteDirectory,
+            entry.name,
+          ),
+          relativePath,
+        )
+
+        continue
+      }
+
+      if (
+        entry.isFile() &&
+        isMeaningfulUiFile(
+          relativePath,
+        )
+      ) {
+        files.push(relativePath)
+      }
+    }
+  }
+
+  await walk(
+    cwd,
+    '',
+  )
+
+  return files.sort()
+}
+
+async function uiFiles(cwd) {
+  const tracked = gitFiles(cwd)
+
+  if (tracked) {
+    return tracked
+  }
+
+  return fallbackFiles(cwd)
+}
+
 async function fileFingerprint(
   cwd,
   relativePath,
@@ -148,11 +260,8 @@ async function fileFingerprint(
 export async function captureUiState(
   cwd,
 ) {
-  const files = gitFiles(cwd)
-
-  if (!files) {
-    return null
-  }
+  const files =
+    await uiFiles(cwd)
 
   const fingerprints = {}
 
@@ -186,7 +295,7 @@ export async function writeSessionState({
   )
 
   const temporary =
-    `${target}.tmp`
+    `${target}.${process.pid}.tmp`
 
   await fs.writeFile(
     temporary,
@@ -195,6 +304,8 @@ export async function writeSessionState({
         version: 1,
         cwd: path.resolve(cwd),
         files,
+        updatedAt:
+          new Date().toISOString(),
       },
       null,
       2,
@@ -242,6 +353,72 @@ export async function readSessionState({
   } catch {
     return null
   }
+}
+
+export async function cleanupSessionStates({
+  maxAgeMs =
+    DEFAULT_SESSION_MAX_AGE_MS,
+  now = Date.now(),
+} = {}) {
+  const directory =
+    sessionsDirectory()
+
+  let entries
+
+  try {
+    entries =
+      await fs.readdir(
+        directory,
+        {
+          withFileTypes: true,
+        },
+      )
+  } catch {
+    return 0
+  }
+
+  let removed = 0
+
+  for (const entry of entries) {
+    if (
+      !entry.isFile() ||
+      !(
+        entry.name.endsWith('.json') ||
+        entry.name.endsWith('.json.tmp')
+      )
+    ) {
+      continue
+    }
+
+    const target =
+      path.join(
+        directory,
+        entry.name,
+      )
+
+    try {
+      const stat =
+        await fs.stat(target)
+
+      if (
+        now - stat.mtimeMs >
+        maxAgeMs
+      ) {
+        await fs.rm(
+          target,
+          {
+            force: true,
+          },
+        )
+
+        removed += 1
+      }
+    } catch {
+      // Ignore races and unreadable stale files.
+    }
+  }
+
+  return removed
 }
 
 export function changedUiFiles(
