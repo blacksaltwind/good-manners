@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+import {
+  installCodexReviewHooks,
+  removeCodexReviewHooks,
+} from './codex-hooks.js'
+
 
 import fs from 'node:fs/promises'
 import os from 'node:os'
@@ -973,6 +978,117 @@ async function removeClaudeIntegration(
   })
 }
 
+function getCodexIntegrationPaths() {
+  const codexRoot =
+    process.env.CODEX_HOME?.trim() ||
+    path.join(
+      os.homedir(),
+      '.codex',
+    )
+
+  const skillDirectory =
+    path.join(
+      codexRoot,
+      'skills',
+      'good-manners',
+    )
+
+  return {
+    skillDirectory,
+    hooksPath:
+      path.join(
+        codexRoot,
+        'hooks.json',
+      ),
+    turnStartPath:
+      path.join(
+        skillDirectory,
+        'scripts',
+        'codex-turn-start.mjs',
+      ),
+    stopPath:
+      path.join(
+        skillDirectory,
+        'scripts',
+        'codex-stop.mjs',
+      ),
+  }
+}
+
+async function configureCodexIntegration(
+  dryRun: boolean,
+) {
+  if (dryRun) {
+    return
+  }
+
+  const {
+    skillDirectory,
+    hooksPath,
+    turnStartPath,
+    stopPath,
+  } = getCodexIntegrationPaths()
+
+  const marker =
+    await readMarker(
+      skillDirectory,
+    )
+
+  if (!marker) {
+    return
+  }
+
+  if (
+    !(await pathExists(turnStartPath)) ||
+    !(await pathExists(stopPath))
+  ) {
+    return
+  }
+
+  const changed =
+    await installCodexReviewHooks({
+      hooksPath,
+      turnStartPath,
+      stopPath,
+    })
+
+  if (changed) {
+    console.log(
+      'Codex review hooks configured. In Codex, run /hooks to review and trust them.',
+    )
+  }
+}
+
+async function removeCodexIntegration(
+  dryRun: boolean,
+) {
+  if (dryRun) {
+    return
+  }
+
+  const {
+    skillDirectory,
+    hooksPath,
+    turnStartPath,
+    stopPath,
+  } = getCodexIntegrationPaths()
+
+  const marker =
+    await readMarker(
+      skillDirectory,
+    )
+
+  if (!marker) {
+    return
+  }
+
+  await removeCodexReviewHooks({
+    hooksPath,
+    turnStartPath,
+    stopPath,
+  })
+}
+
 function parseCommand(): {
   command: Command
   dryRun: boolean
@@ -1026,6 +1142,7 @@ async function main() {
   if (command === 'install') {
     await install(dryRun)
     await configureClaudeIntegration(dryRun)
+    await configureCodexIntegration(dryRun)
     return
   }
 
@@ -1037,6 +1154,7 @@ async function main() {
   if (command === 'update') {
     await install(dryRun)
     await configureClaudeIntegration(dryRun)
+    await configureCodexIntegration(dryRun)
     return
   }
 
@@ -1057,6 +1175,8 @@ async function main() {
   }
 
   await removeClaudeIntegration(dryRun)
+
+  await removeCodexIntegration(dryRun)
   await uninstall(dryRun)
 }
 
