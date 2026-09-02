@@ -234,7 +234,11 @@ importers:
 
   packages/checker: {}
 
-  packages/cli: {}
+  packages/cli:
+    dependencies:
+      '@good-manners/checker':
+        specifier: workspace:*
+        version: link:../checker
 
   packages/core: {}
 

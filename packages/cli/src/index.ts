@@ -4,8 +4,11 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
+import { checkPath } from '@good-manners/checker'
+
 type Command =
   | 'install'
+  | 'check'
   | 'status'
   | 'update'
   | 'uninstall'
@@ -813,6 +816,59 @@ async function uninstall(
   }
 }
 
+async function check(
+  target: string,
+) {
+  let issues
+
+  try {
+    issues = await checkPath(target)
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error)
+
+    console.error(
+      `Error: ${message}`,
+    )
+
+    process.exitCode = 2
+    return
+  }
+
+  if (issues.length === 0) {
+    console.log(
+      'Good Manners: no deterministic UX issues found.',
+   )
+    return
+  }
+
+  for (const issue of issues) {
+    const location =
+      issue.file
+        ? `${path.relative(process.cwd(), issue.file)}:${issue.line}:${issue.column}`
+        : `${issue.line}:${issue.column}`
+
+    console.log(
+      `${location}  ${issue.id}  ${issue.message}`,
+    )
+
+    if (issue.snippet) {
+      console.log(
+        `  ${issue.snippet}`,
+      )
+    }
+  }
+
+  console.log('')
+  console.log(
+    `${issues.length} issue${issues.length === 1 ? '' : 's'} found.`,
+  )
+
+  process.exitCode = 1
+}
+
 function parseCommand(): {
   command: Command
   dryRun: boolean
@@ -837,6 +893,7 @@ function parseCommand(): {
     raw !== 'install' &&
     raw !== 'status' &&
     raw !== 'update' &&
+    raw !== 'check' &&
     raw !== 'uninstall'
   ) {
     console.error(
@@ -844,7 +901,7 @@ function parseCommand(): {
     )
 
     console.error(
-      'Usage: good-manners [install|status|update|uninstall] [--dry-run]',
+      'Usage: good-manners [install|status|update|uninstall|check] [path] [--dry-run]',
     )
 
     process.exit(1)
@@ -874,6 +931,22 @@ async function main() {
 
   if (command === 'update') {
     await install(dryRun)
+    return
+  }
+
+  if (command === 'check') {
+    const positional =
+      process.argv
+        .slice(2)
+        .filter(
+          (arg) =>
+            !arg.startsWith('--'),
+        )
+
+    const target =
+      positional[1] ?? '.'
+
+    await check(target)
     return
   }
 
