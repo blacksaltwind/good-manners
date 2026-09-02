@@ -29,7 +29,7 @@ const rulesDirectory =
   )
 
 describe('buildContext', () => {
-  it('keeps the final rendered packet within the character budget', async () => {
+  it('keeps the final packet within the character budget', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -47,7 +47,7 @@ describe('buildContext', () => {
     ).toBeLessThanOrEqual(4800)
   })
 
-  it('drops optional rules before MUST rules', async () => {
+  it('keeps the selected rule count bounded', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -56,23 +56,16 @@ describe('buildContext', () => {
     const result = buildContext({
       rules,
       prompt:
-        'Build a login form with email and password.',
-      maxCharacters: 4800,
+        'Build a login form with loading and errors.',
+      maxRules: 30,
     })
 
     expect(
-      result.contextCharacters,
-    ).toBeLessThanOrEqual(4800)
-
-    expect(
-      result.selected.some(
-        (rule) =>
-          rule.severity === 'must',
-      ),
-    ).toBe(true)
+      result.selected.length,
+    ).toBeLessThanOrEqual(30)
   })
 
-  it('reports overflow when MUST rules alone exceed the character budget', async () => {
+  it('does not activate for backend-only work', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -81,27 +74,21 @@ describe('buildContext', () => {
     const result = buildContext({
       rules,
       prompt:
-        'Build a form that saves profile changes.',
-      maxCharacters: 40,
+        'Refactor a Node.js repository query.',
     })
 
+    expect(result.active).toBe(false)
+
     expect(
-      result.budgetExceededByMust,
-    ).toBe(true)
+      result.selected.length,
+    ).toBe(0)
 
     expect(
       result.contextCharacters,
-    ).toBeGreaterThan(40)
-
-    expect(
-      result.selected.every(
-        (rule) =>
-          rule.severity === 'must',
-      ),
-    ).toBe(true)
+    ).toBe(0)
   })
 
-  it('keeps estimated tokens informational', async () => {
+  it('keeps token estimates informational', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -111,7 +98,6 @@ describe('buildContext', () => {
       rules,
       prompt:
         'Build a profile form.',
-      maxCharacters: 4800,
     })
 
     expect(
@@ -120,6 +106,8 @@ describe('buildContext', () => {
 
     expect(
       result.contextCharacters,
-    ).toBe(result.context.length)
+    ).toBe(
+      result.context.length,
+    )
   })
 })

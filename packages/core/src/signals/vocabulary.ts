@@ -99,8 +99,8 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
 
   search: [
     /\bsearch\b/i,
-    /\bfilter\b/i,
-    /\bquery\b/i,
+    /\bfilter(?:s|ed|ing)?\b/i,
+    /\bsearch results?\b/i,
   ],
 
   list: [
@@ -130,8 +130,8 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
   ],
 
   error: [
-    /\berror\b/i,
-    /\bfailure\b/i,
+    /\berrors?\b/i,
+    /\bfailures?\b/i,
     /\bfailed\b/i,
     /\bcatch\b/i,
   ],

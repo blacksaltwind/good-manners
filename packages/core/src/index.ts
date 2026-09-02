@@ -48,3 +48,7 @@ export {
   type RenderContextInput,
   type RenderContextResult,
 } from './context-packet/render-context.js'
+
+export {
+  shouldActivate,
+} from './signals/should-activate.js'

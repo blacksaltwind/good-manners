@@ -5,6 +5,10 @@ import {
 } from '../signals/detect-signals.js'
 
 import {
+  shouldActivate,
+} from '../signals/should-activate.js'
+
+import {
   selectRules,
 } from './select-rules.js'
 
@@ -17,6 +21,7 @@ export type BuildContextInput = {
   prompt?: string
   source?: string[]
   maxCharacters?: number
+  maxRules?: number
 }
 
 export function buildContext({
@@ -24,23 +29,53 @@ export function buildContext({
   prompt,
   source,
   maxCharacters = 4800,
+  maxRules = 30,
 }: BuildContextInput) {
   const signals = detectSignals({
     prompt,
     source,
   })
 
+  if (!shouldActivate(signals)) {
+    return {
+      active: false,
+      signals,
+      selected: [],
+      omittedDueToBudget: [],
+      omittedMustRules: [],
+      context: '',
+      contextCharacters: 0,
+      contextEstimatedTokens: 0,
+    }
+  }
+
+  /*
+   * Reserve space for packet headers, signal names,
+   * and closing instructions.
+   */
+  const emptyPacket = renderContext({
+    signals,
+    rules: [],
+  })
+
+  const ruleBudget = Math.max(
+    0,
+    maxCharacters -
+      emptyPacket.characterCount,
+  )
+
   const selection = selectRules({
     rules,
     signals,
-    maxCharacters,
+    maxCharacters: ruleBudget,
+    maxRules,
   })
 
   const selected = [
     ...selection.selected,
   ]
 
-  const additionallyOmitted: string[] =
+  const removedDuringRender: string[] =
     []
 
   let context = renderContext({
@@ -48,42 +83,24 @@ export function buildContext({
     rules: selected,
   })
 
-  // The selector budgets rule text, but the final
-  // packet also contains headers and instructions.
-  // Remove lowest-priority optional rules until the
-  // actual rendered character count fits.
+  /*
+   * Exact final-character safety check.
+   *
+   * Remove the lowest-priority selected rule if
+   * formatting overhead still pushed us over.
+   */
   while (
     context.characterCount >
-    maxCharacters
+      maxCharacters &&
+    selected.length > 0
   ) {
-    let removableIndex = -1
+    const removed = selected.pop()
 
-    for (
-      let index =
-        selected.length - 1;
-      index >= 0;
-      index -= 1
-    ) {
-      if (
-        selected[index].severity !==
-        'must'
-      ) {
-        removableIndex = index
-        break
-      }
-    }
-
-    if (removableIndex === -1) {
+    if (!removed) {
       break
     }
 
-    const [removed] =
-      selected.splice(
-        removableIndex,
-        1,
-      )
-
-    additionallyOmitted.push(
+    removedDuringRender.push(
       removed.id,
     )
 
@@ -93,7 +110,22 @@ export function buildContext({
     })
   }
 
+  const removedMustRules =
+    selection.selected
+      .filter(
+        (rule) =>
+          removedDuringRender.includes(
+            rule.id,
+          ) &&
+          rule.severity === 'must',
+      )
+      .map(
+        (rule) => rule.id,
+      )
+
   return {
+    active: true,
+
     signals,
 
     selected,
@@ -101,7 +133,14 @@ export function buildContext({
     omittedDueToBudget: [
       ...new Set([
         ...selection.omittedDueToBudget,
-        ...additionallyOmitted,
+        ...removedDuringRender,
+      ]),
+    ],
+
+    omittedMustRules: [
+      ...new Set([
+        ...selection.omittedMustRules,
+        ...removedMustRules,
       ]),
     ],
 
@@ -112,13 +151,5 @@ export function buildContext({
 
     contextEstimatedTokens:
       context.estimatedTokens,
-
-    budgetExceededByMust:
-      context.characterCount >
-        maxCharacters &&
-      selected.every(
-        (rule) =>
-          rule.severity === 'must',
-      ),
   }
 }

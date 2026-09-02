@@ -4,6 +4,7 @@ import type { DetectedSignal } from '../signals/types.js'
 import { isRuleApplicable } from './applicability.js'
 import { scoreRule } from './score-rule.js'
 import { estimateTokens } from './token-estimate.js'
+import { SIGNAL_ANCHOR_RULES } from './anchor-rules.js'
 
 export type SelectedRule = {
   id: string
@@ -19,14 +20,23 @@ export type SelectRulesInput = {
   rules: Rule[]
   signals: DetectedSignal[]
   maxCharacters?: number
+  maxRules?: number
 }
 
 export type SelectRulesResult = {
   selected: SelectedRule[]
   omittedDueToBudget: string[]
+  omittedMustRules: string[]
   characterCount: number
   estimatedTokens: number
-  budgetExceededByMust: boolean
+}
+
+function severityRank(
+  severity: Rule['severity'],
+): number {
+  if (severity === 'must') return 0
+  if (severity === 'should') return 1
+  return 2
 }
 
 function getMatchedSignals(
@@ -46,18 +56,11 @@ function getMatchedSignals(
     .sort()
 }
 
-function severityRank(
-  severity: Rule['severity'],
-): number {
-  if (severity === 'must') return 0
-  if (severity === 'should') return 1
-  return 2
-}
-
 export function selectRules({
   rules,
   signals,
   maxCharacters = 4800,
+  maxRules = 30,
 }: SelectRulesInput): SelectRulesResult {
   const signalNames = new Set(
     signals.map((signal) => signal.name),
@@ -98,95 +101,50 @@ export function selectRules({
         return b.score - a.score
       }
 
+      const severityDifference =
+        severityRank(a.severity) -
+        severityRank(b.severity)
+
+      if (severityDifference !== 0) {
+        return severityDifference
+      }
+
       return a.id.localeCompare(b.id)
     })
 
-  const mustRules = applicable.filter(
-    (rule) =>
-      rule.severity === 'must',
-  )
-
-  const optionalRules =
-    applicable.filter(
-      (rule) =>
-        rule.severity !== 'must',
-    )
-
-  const selected = [
-    ...mustRules,
-  ]
-
-  const selectedIds = new Set(
-    selected.map((rule) => rule.id),
-  )
-
-  let characterCount =
-    selected.reduce(
-      (total, rule) =>
-        total + rule.characterCount,
-      0,
-    )
-
-  const coveredSignals = new Set(
-    selected.flatMap(
-      (rule) =>
-        rule.matchedSignals,
+  const applicableById = new Map(
+    applicable.map(
+      (rule) => [rule.id, rule],
     ),
   )
 
-  // First provide coverage for detected signals.
-  for (const signal of signalNames) {
-    if (coveredSignals.has(signal)) {
-      continue
+  const selected: SelectedRule[] = []
+  const selectedIds = new Set<string>()
+
+  let characterCount = 0
+
+  function canAdd(
+    rule: SelectedRule,
+  ): boolean {
+    if (selected.length >= maxRules) {
+      return false
     }
 
-    const candidate =
-      optionalRules.find(
-        (rule) =>
-          !selectedIds.has(rule.id) &&
-          rule.matchedSignals.includes(
-            signal,
-          ),
-      )
-
-    if (!candidate) {
-      continue
-    }
-
-    if (
+    return (
       characterCount +
-        candidate.characterCount >
+        rule.characterCount <=
       maxCharacters
-    ) {
-      continue
-    }
-
-    selected.push(candidate)
-    selectedIds.add(candidate.id)
-
-    characterCount +=
-      candidate.characterCount
-
-    for (
-      const matched of
-      candidate.matchedSignals
-    ) {
-      coveredSignals.add(matched)
-    }
+    )
   }
 
-  // Then fill remaining space by relevance.
-  for (const rule of optionalRules) {
-    if (selectedIds.has(rule.id)) {
-      continue
-    }
-
+  function addRule(
+    rule: SelectedRule,
+  ): boolean {
     if (
-      characterCount +
-        rule.characterCount >
-      maxCharacters
+      selectedIds.has(rule.id) ||
+      !canAdd(rule)
     ) {
-      continue
+      return false
     }
 
     selected.push(rule)
@@ -194,9 +152,81 @@ export function selectRules({
 
     characterCount +=
       rule.characterCount
+
+    return true
+  }
+
+  /*
+   * Phase 0:
+   *
+   * Seed fundamental rules for detected interaction
+   * types before general relevance scoring.
+   */
+  for (const signal of signalNames) {
+    const anchorIds =
+      SIGNAL_ANCHOR_RULES[signal] ?? []
+
+    for (const id of anchorIds) {
+      const rule =
+        applicableById.get(id)
+
+      if (rule) {
+        addRule(rule)
+      }
+    }
+  }
+
+  /*
+   * Phase 1:
+   *
+   * Ensure each remaining detected signal has at
+   * least one relevant rule where possible.
+   */
+  const coveredSignals = new Set(
+    selected.flatMap(
+      (rule) =>
+        rule.matchedSignals,
+    ),
+  )
+
+  for (const signal of signalNames) {
+    if (coveredSignals.has(signal)) {
+      continue
+    }
+
+    const candidate =
+      applicable.find(
+        (rule) =>
+          !selectedIds.has(rule.id) &&
+          rule.matchedSignals.includes(
+            signal,
+          ),
+      )
+
+    if (candidate && addRule(candidate)) {
+      for (
+        const matched of
+        candidate.matchedSignals
+      ) {
+        coveredSignals.add(matched)
+      }
+    }
+  }
+
+  /*
+   * Phase 2:
+   *
+   * Fill remaining capacity by relevance.
+   */
+  for (const rule of applicable) {
+    addRule(rule)
   }
 
   selected.sort((a, b) => {
+    if (a.score !== b.score) {
+      return b.score - a.score
+    }
+
     const severityDifference =
       severityRank(a.severity) -
       severityRank(b.severity)
@@ -205,44 +235,41 @@ export function selectRules({
       return severityDifference
     }
 
-    if (a.score !== b.score) {
-      return b.score - a.score
-    }
-
     return a.id.localeCompare(b.id)
   })
 
-  const omittedDueToBudget =
-    applicable
-      .filter(
-        (rule) =>
-          !selectedIds.has(rule.id),
-      )
-      .map((rule) => rule.id)
-
-  const estimatedTokens =
-    selected.reduce(
-      (total, rule) =>
-        total +
-        rule.estimatedTokens,
-      0,
-    )
-
-  const mustCharacterCount =
-    mustRules.reduce(
-      (total, rule) =>
-        total +
-        rule.characterCount,
-      0,
+  const omitted =
+    applicable.filter(
+      (rule) =>
+        !selectedIds.has(rule.id),
     )
 
   return {
     selected,
-    omittedDueToBudget,
+
+    omittedDueToBudget:
+      omitted.map(
+        (rule) => rule.id,
+      ),
+
+    omittedMustRules:
+      omitted
+        .filter(
+          (rule) =>
+            rule.severity === 'must',
+        )
+        .map(
+          (rule) => rule.id,
+        ),
+
     characterCount,
-    estimatedTokens,
-    budgetExceededByMust:
-      mustCharacterCount >
-      maxCharacters,
+
+    estimatedTokens:
+      selected.reduce(
+        (total, rule) =>
+          total +
+          rule.estimatedTokens,
+        0,
+      ),
   }
 }

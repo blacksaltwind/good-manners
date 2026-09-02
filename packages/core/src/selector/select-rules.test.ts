@@ -5,6 +5,7 @@ import {
 } from 'vitest'
 
 import path from 'node:path'
+
 import {
   fileURLToPath,
 } from 'node:url'
@@ -49,20 +50,26 @@ describe('selectRules', () => {
       signals,
     })
 
-    const ids = result.selected.map(
-      (rule) => rule.id,
+    const ids = new Set(
+      result.selected.map(
+        (rule) => rule.id,
+      ),
     )
 
-    expect(ids).toContain(
-      'error.preserve-input',
-    )
+    expect(
+      ids.has(
+        'error.preserve-input',
+      ),
+    ).toBe(true)
 
-    expect(ids).toContain(
-      'core.error-prevention',
-    )
+    expect(
+      ids.has(
+        'core.error-prevention',
+      ),
+    ).toBe(true)
   })
 
-  it('respects the token budget unless MUST rules exceed it', async () => {
+  it('respects the character budget', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -77,30 +84,15 @@ describe('selectRules', () => {
     const result = selectRules({
       rules,
       signals,
-      maxCharacters: 200,
+      maxCharacters: 1000,
     })
 
-    if (result.budgetExceededByMust) {
-      expect(
-        result.estimatedTokens,
-      ).toBeGreaterThan(200)
-
-      expect(
-        result.selected.every(
-          (rule) =>
-            rule.severity === 'must',
-        ),
-      ).toBe(true)
-    } else {
-      expect(
-        result.estimatedTokens,
-      ).toBeLessThanOrEqual(200)
-    }
+    expect(
+      result.characterCount,
+    ).toBeLessThanOrEqual(1000)
   })
-})
 
-describe('selector priority guarantees', () => {
-  it('never drops applicable MUST rules because of token budget', async () => {
+  it('respects the rule count limit', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -109,65 +101,52 @@ describe('selector priority guarantees', () => {
     const signals =
       detectSignals({
         prompt:
-          'Build a form that saves user profile changes',
+          'Build a login form with loading and error handling.',
       })
 
     const result = selectRules({
       rules,
       signals,
-      maxCharacters: 1,
+      maxRules: 20,
     })
 
-    const mustApplicable = rules
-      .filter(
+    expect(
+      result.selected.length,
+    ).toBeLessThanOrEqual(20)
+  })
+
+  it('prioritizes MUST rules without assuming every MUST rule must be injected', async () => {
+    const rules =
+      await loadRulesDirectory(
+        rulesDirectory,
+      )
+
+    const signals =
+      detectSignals({
+        prompt:
+          'Build a login form with loading and error handling.',
+      })
+
+    const result = selectRules({
+      rules,
+      signals,
+      maxRules: 10,
+      maxCharacters: 2000,
+    })
+
+    expect(
+      result.selected.some(
         (rule) =>
           rule.severity === 'must',
-      )
-      .filter((rule) => {
-        const names = new Set(
-          signals.map(
-            (signal) => signal.name,
-          ),
-        )
-
-        return (
-          rule.applies_when.none.every(
-            (signal) =>
-              !names.has(signal),
-          ) &&
-          rule.applies_when.all.every(
-            (signal) =>
-              names.has(signal),
-          ) &&
-          (
-            rule.applies_when.any.length ===
-              0 ||
-            rule.applies_when.any.some(
-              (signal) =>
-                names.has(signal),
-            )
-          )
-        )
-      })
-
-    const selectedIds = new Set(
-      result.selected.map(
-        (rule) => rule.id,
       ),
-    )
-
-    for (const rule of mustApplicable) {
-      expect(
-        selectedIds.has(rule.id),
-      ).toBe(true)
-    }
+    ).toBe(true)
 
     expect(
-      result.budgetExceededByMust,
-    ).toBe(true)
+      result.selected.length,
+    ).toBeLessThanOrEqual(10)
   })
 
-  it('reports optional rules omitted by the budget', async () => {
+  it('reports MUST rules that were not injected', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -176,17 +155,17 @@ describe('selector priority guarantees', () => {
     const signals =
       detectSignals({
         prompt:
-          'Build a form that saves data',
+          'Build a login form with loading and error handling.',
       })
 
     const result = selectRules({
       rules,
       signals,
-      maxCharacters: 400,
+      maxRules: 5,
     })
 
     expect(
-      result.omittedDueToBudget.length,
+      result.omittedMustRules.length,
     ).toBeGreaterThan(0)
   })
 })
