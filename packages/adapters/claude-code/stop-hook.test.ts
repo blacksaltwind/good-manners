@@ -1,4 +1,5 @@
 import {
+  afterEach,
   describe,
   expect,
   it,
@@ -12,43 +13,78 @@ import {
   spawnSync,
 } from 'node:child_process'
 
-const hookPath = path.resolve(
-  'packages/adapters/claude-code/stop-hook.mjs',
+const adapterRoot = path.resolve(
+  'packages/adapters/claude-code',
 )
 
-async function makeRepo() {
-  const cwd =
+const turnStart = path.join(
+  adapterRoot,
+  'turn-start.mjs',
+)
+
+const stopHook = path.join(
+  adapterRoot,
+  'stop-hook.mjs',
+)
+
+const temporaryDirectories: string[] = []
+
+async function makeFixture() {
+  const root =
     await fs.mkdtemp(
       path.join(
         os.tmpdir(),
-        'good-manners-stop-hook-',
+        'good-manners-session-hook-',
       ),
     )
+
+  temporaryDirectories.push(root)
+
+  const home = path.join(root, 'home')
+  const repo = path.join(root, 'repo')
+
+  await fs.mkdir(home)
+  await fs.mkdir(repo)
 
   spawnSync(
     'git',
     ['init', '-q'],
-    { cwd },
+    {
+      cwd: repo,
+    },
   )
 
-  return cwd
+  return {
+    home,
+    repo,
+  }
 }
 
-function runHook(
-  cwd: string,
-  input: Record<string, unknown>,
-) {
+function runHook({
+  hook,
+  home,
+  repo,
+  input,
+}: {
+  hook: string
+  home: string
+  repo: string
+  input: Record<string, unknown>
+}) {
   const result =
     spawnSync(
       process.execPath,
-      [hookPath],
+      [hook],
       {
-        cwd,
+        cwd: repo,
+        env: {
+          ...process.env,
+          HOME: home,
+        },
         input:
           JSON.stringify({
-            cwd,
-            hook_event_name: 'Stop',
-            stop_hook_active: false,
+            session_id: 'session-test',
+            cwd: repo,
             ...input,
           }),
         encoding: 'utf8',
@@ -65,130 +101,221 @@ function runHook(
   }
 }
 
-describe('Claude Code Stop hook', () => {
-  it('allows the second stop attempt', async () => {
-    const cwd = await makeRepo()
+afterEach(async () => {
+  for (
+    const directory of
+    temporaryDirectories.splice(0)
+  ) {
+    await fs.rm(
+      directory,
+      {
+        recursive: true,
+        force: true,
+      },
+    )
+  }
+})
 
-    try {
-      await fs.writeFile(
-        path.join(cwd, 'App.tsx'),
-        '<button>Save</button>',
-      )
+describe('Claude session-aware UX review hooks', () => {
+  it('does not review UI changes that already existed before the turn', async () => {
+    const {
+      home,
+      repo,
+    } = await makeFixture()
 
-      const output =
-        runHook(cwd, {
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Already dirty</button>',
+    )
+
+    runHook({
+      hook: turnStart,
+      home,
+      repo,
+      input: {
+        hook_event_name:
+          'UserPromptSubmit',
+      },
+    })
+
+    const output = runHook({
+      hook: stopHook,
+      home,
+      repo,
+      input: {
+        hook_event_name: 'Stop',
+        stop_hook_active: false,
+      },
+    })
+
+    expect(
+      output.decision,
+    ).toBeUndefined()
+  })
+
+  it('reviews a UI file modified after the turn baseline', async () => {
+    const {
+      home,
+      repo,
+    } = await makeFixture()
+
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Before</button>',
+    )
+
+    runHook({
+      hook: turnStart,
+      home,
+      repo,
+      input: {
+        hook_event_name:
+          'UserPromptSubmit',
+      },
+    })
+
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>After</button>',
+    )
+
+    const output = runHook({
+      hook: stopHook,
+      home,
+      repo,
+      input: {
+        hook_event_name: 'Stop',
+        stop_hook_active: false,
+      },
+    })
+
+    expect(
+      output.decision,
+    ).toBe('block')
+
+    expect(
+      output.reason,
+    ).toContain('App.tsx')
+  })
+
+  it('commits the corrected state after the one review pass', async () => {
+    const {
+      home,
+      repo,
+    } = await makeFixture()
+
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Before</button>',
+    )
+
+    runHook({
+      hook: turnStart,
+      home,
+      repo,
+      input: {
+        hook_event_name:
+          'UserPromptSubmit',
+      },
+    })
+
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Changed</button>',
+    )
+
+    expect(
+      runHook({
+        hook: stopHook,
+        home,
+        repo,
+        input: {
+          hook_event_name: 'Stop',
+          stop_hook_active: false,
+        },
+      }).decision,
+    ).toBe('block')
+
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Corrected</button>',
+    )
+
+    expect(
+      runHook({
+        hook: stopHook,
+        home,
+        repo,
+        input: {
+          hook_event_name: 'Stop',
           stop_hook_active: true,
-        })
-
-      expect(
-        output.decision,
-      ).toBeUndefined()
-    } finally {
-      await fs.rm(
-        cwd,
-        {
-          recursive: true,
-          force: true,
         },
-      )
-    }
+      }).decision,
+    ).toBeUndefined()
+
+    expect(
+      runHook({
+        hook: stopHook,
+        home,
+        repo,
+        input: {
+          hook_event_name: 'Stop',
+          stop_hook_active: false,
+        },
+      }).decision,
+    ).toBeUndefined()
   })
 
-  it('does not block backend-only changes', async () => {
-    const cwd = await makeRepo()
+  it('does not reset the turn baseline during compaction', async () => {
+    const {
+      home,
+      repo,
+    } = await makeFixture()
 
-    try {
-      await fs.writeFile(
-        path.join(cwd, 'server.ts'),
-        'export const value = 1',
-      )
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Before</button>',
+    )
 
-      const output =
-        runHook(cwd, {})
+    runHook({
+      hook: turnStart,
+      home,
+      repo,
+      input: {
+        hook_event_name:
+          'SessionStart',
+        source: 'startup',
+      },
+    })
 
-      expect(
-        output.decision,
-      ).toBeUndefined()
-    } finally {
-      await fs.rm(
-        cwd,
-        {
-          recursive: true,
-          force: true,
-        },
-      )
-    }
-  })
+    await fs.writeFile(
+      path.join(repo, 'App.tsx'),
+      '<button>Changed</button>',
+    )
 
-  it('blocks once when UI files changed', async () => {
-    const cwd = await makeRepo()
+    runHook({
+      hook: turnStart,
+      home,
+      repo,
+      input: {
+        hook_event_name:
+          'SessionStart',
+        source: 'compact',
+      },
+    })
 
-    try {
-      await fs.writeFile(
-        path.join(cwd, 'LoginForm.tsx'),
-        '<form><button>Log in</button></form>',
-      )
+    const output = runHook({
+      hook: stopHook,
+      home,
+      repo,
+      input: {
+        hook_event_name: 'Stop',
+        stop_hook_active: false,
+      },
+    })
 
-      const output =
-        runHook(cwd, {})
-
-      expect(
-        output.decision,
-      ).toBe('block')
-
-      expect(
-        output.reason,
-      ).toContain(
-        'LoginForm.tsx',
-      )
-
-      expect(
-        output.reason,
-      ).toContain(
-        'only automatic correction pass',
-      )
-    } finally {
-      await fs.rm(
-        cwd,
-        {
-          recursive: true,
-          force: true,
-        },
-      )
-    }
-  })
-
-  it('ignores generated UI files', async () => {
-    const cwd = await makeRepo()
-
-    try {
-      await fs.mkdir(
-        path.join(cwd, 'dist'),
-      )
-
-      await fs.writeFile(
-        path.join(
-          cwd,
-          'dist',
-          'App.js',
-        ),
-        'console.log("generated")',
-      )
-
-      const output =
-        runHook(cwd, {})
-
-      expect(
-        output.decision,
-      ).toBeUndefined()
-    } finally {
-      await fs.rm(
-        cwd,
-        {
-          recursive: true,
-          force: true,
-        },
-      )
-    }
+    expect(
+      output.decision,
+    ).toBe('block')
   })
 })

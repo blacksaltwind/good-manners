@@ -1,135 +1,11 @@
 #!/usr/bin/env node
 
 import {
-  execFileSync,
-} from 'node:child_process'
-
-import path from 'node:path'
-
-const UI_EXTENSIONS = new Set([
-  '.html',
-  '.htm',
-  '.jsx',
-  '.tsx',
-  '.css',
-  '.scss',
-  '.sass',
-  '.less',
-])
-
-const SKIP_PARTS = new Set([
-  '.git',
-  'node_modules',
-  'dist',
-  'build',
-  'coverage',
-  '.next',
-  'out',
-  '.cache',
-  '.turbo',
-  '.vercel',
-])
-
-function isMeaningfulUiFile(filePath) {
-  const normalized =
-    filePath.replaceAll('\\', '/')
-
-  const parts =
-    normalized.split('/')
-
-  if (
-    parts.some(
-      (part) =>
-        SKIP_PARTS.has(part),
-    )
-  ) {
-    return false
-  }
-
-  return UI_EXTENSIONS.has(
-    path.extname(
-      normalized,
-    ).toLowerCase(),
-  )
-}
-
-function gitLines(
-  cwd,
-  args,
-) {
-  try {
-    const output =
-      execFileSync(
-        'git',
-        args,
-        {
-          cwd,
-          encoding: 'utf8',
-          stdio: [
-            'ignore',
-            'pipe',
-            'ignore',
-          ],
-        },
-      )
-
-    return output
-      .split('\n')
-      .map(
-        (line) => line.trim(),
-      )
-      .filter(Boolean)
-  } catch {
-    return []
-  }
-}
-
-function changedFiles(cwd) {
-  const tracked =
-    gitLines(
-      cwd,
-      [
-        'diff',
-        '--name-only',
-        '--diff-filter=ACMR',
-      ],
-    )
-
-  const staged =
-    gitLines(
-      cwd,
-      [
-        'diff',
-        '--cached',
-        '--name-only',
-        '--diff-filter=ACMR',
-      ],
-    )
-
-  const untracked =
-    gitLines(
-      cwd,
-      [
-        'ls-files',
-        '--others',
-        '--exclude-standard',
-      ],
-    )
-
-  return [
-    ...new Set([
-      ...tracked,
-      ...staged,
-      ...untracked,
-    ]),
-  ]
-    .filter(isMeaningfulUiFile)
-    .sort()
-}
-
-function allow() {
-  process.stdout.write('{}\n')
-}
+  captureUiState,
+  changedUiFiles,
+  readSessionState,
+  writeSessionState,
+} from './session-state.mjs'
 
 async function readInput() {
   let input = ''
@@ -143,35 +19,93 @@ async function readInput() {
   return input
 }
 
-const raw =
-  await readInput()
+function allow() {
+  process.stdout.write('{}\n')
+}
 
 let event
 
 try {
   event =
-    JSON.parse(raw)
+    JSON.parse(
+      await readInput(),
+    )
 } catch {
   allow()
   process.exit(0)
 }
 
 if (
-  event.stop_hook_active === true
+  typeof event.session_id !== 'string' ||
+  typeof event.cwd !== 'string'
 ) {
   allow()
   process.exit(0)
 }
 
-const cwd =
-  typeof event.cwd === 'string'
-    ? event.cwd
-    : process.cwd()
+const current =
+  await captureUiState(
+    event.cwd,
+  )
+
+if (!current) {
+  allow()
+  process.exit(0)
+}
+
+const baseline =
+  await readSessionState({
+    sessionId: event.session_id,
+    cwd: event.cwd,
+  })
+
+/*
+ * A session that started before Good Manners was
+ * installed has no trustworthy baseline. Failing open
+ * avoids reviewing unrelated pre-existing changes.
+ */
+if (!baseline) {
+  await writeSessionState({
+    sessionId: event.session_id,
+    cwd: event.cwd,
+    files: current,
+  })
+
+  allow()
+  process.exit(0)
+}
+
+/*
+ * This is the continuation caused by our own Stop
+ * block. Commit the corrected UI as the next turn's
+ * baseline and allow Claude to finish.
+ */
+if (
+  event.stop_hook_active === true
+) {
+  await writeSessionState({
+    sessionId: event.session_id,
+    cwd: event.cwd,
+    files: current,
+  })
+
+  allow()
+  process.exit(0)
+}
 
 const files =
-  changedFiles(cwd)
+  changedUiFiles(
+    baseline,
+    current,
+  )
 
 if (files.length === 0) {
+  await writeSessionState({
+    sessionId: event.session_id,
+    cwd: event.cwd,
+    files: current,
+  })
+
   allow()
   process.exit(0)
 }
@@ -190,7 +124,7 @@ const more =
     : ''
 
 const reason = [
-  'Good Manners final UX review is required because meaningful UI files changed.',
+  'Good Manners final UX review is required because this turn changed meaningful UI files.',
   '',
   'Changed UI files:',
   listedFiles + more,
