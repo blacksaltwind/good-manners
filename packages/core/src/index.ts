@@ -42,3 +42,9 @@ export {
   buildContext,
   type BuildContextInput,
 } from './selector/build-context.js'
+
+export {
+  renderContext,
+  type RenderContextInput,
+  type RenderContextResult,
+} from './context-packet/render-context.js'

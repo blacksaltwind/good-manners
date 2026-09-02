@@ -26,23 +26,23 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
   ],
 
   mutation: [
-    /\bcreate\b/i,
-    /\bupdate\b/i,
-    /\bsave\b/i,
-    /\bsubmit\b/i,
-    /\bdelete\b/i,
-    /\bremove\b/i,
-    /\bpost\b/i,
-    /\bput\b/i,
-    /\bpatch\b/i,
+    /\bcreat(?:e|es|ed|ing)\b/i,
+    /\bupdat(?:e|es|ed|ing)\b/i,
+    /\bsav(?:e|es|ed|ing)\b/i,
+    /\bsubmit(?:s|ted|ting)?\b/i,
+    /\bdelet(?:e|es|ed|ing)\b/i,
+    /\bremov(?:e|es|ed|ing)\b/i,
+    /\bpost(?:s|ed|ing)?\b/i,
+    /\bput(?:s|ting)?\b/i,
+    /\bpatch(?:es|ed|ing)?\b/i,
   ],
 
   destructive: [
-    /\bdelete\b/i,
-    /\bremove\b/i,
-    /\bdestroy\b/i,
-    /\breset\b/i,
-    /\berase\b/i,
+    /\bdelet(?:e|es|ed|ing)\b/i,
+    /\bremov(?:e|es|ed|ing)\b/i,
+    /\bdestroy(?:s|ed|ing)?\b/i,
+    /\breset(?:s|ting)?\b/i,
+    /\beras(?:e|es|ed|ing)\b/i,
   ],
 
   irreversible: [

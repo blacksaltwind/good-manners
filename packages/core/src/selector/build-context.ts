@@ -8,6 +8,10 @@ import {
   selectRules,
 } from './select-rules.js'
 
+import {
+  renderContext,
+} from '../context-packet/render-context.js'
+
 export type BuildContextInput = {
   rules: Rule[]
   prompt?: string
@@ -26,14 +30,21 @@ export function buildContext({
     source,
   })
 
-  const result = selectRules({
+  const selection = selectRules({
     rules,
     signals,
     maxTokens,
   })
 
+  const context = renderContext({
+    signals,
+    rules: selection.selected,
+  })
+
   return {
     signals,
-    ...result,
+    ...selection,
+    context: context.text,
+    contextTokens: context.estimatedTokens,
   }
 }
