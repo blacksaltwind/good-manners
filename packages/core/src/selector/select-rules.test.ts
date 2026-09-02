@@ -62,7 +62,7 @@ describe('selectRules', () => {
     )
   })
 
-  it('respects the token budget', async () => {
+  it('respects the token budget unless MUST rules exceed it', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -80,8 +80,113 @@ describe('selectRules', () => {
       maxTokens: 50,
     })
 
+    if (result.budgetExceededByMust) {
+      expect(
+        result.estimatedTokens,
+      ).toBeGreaterThan(50)
+
+      expect(
+        result.selected.every(
+          (rule) =>
+            rule.severity === 'must',
+        ),
+      ).toBe(true)
+    } else {
+      expect(
+        result.estimatedTokens,
+      ).toBeLessThanOrEqual(50)
+    }
+  })
+})
+
+describe('selector priority guarantees', () => {
+  it('never drops applicable MUST rules because of token budget', async () => {
+    const rules =
+      await loadRulesDirectory(
+        rulesDirectory,
+      )
+
+    const signals =
+      detectSignals({
+        prompt:
+          'Build a form that saves user profile changes',
+      })
+
+    const result = selectRules({
+      rules,
+      signals,
+      maxTokens: 1,
+    })
+
+    const mustApplicable = rules
+      .filter(
+        (rule) =>
+          rule.severity === 'must',
+      )
+      .filter((rule) => {
+        const names = new Set(
+          signals.map(
+            (signal) => signal.name,
+          ),
+        )
+
+        return (
+          rule.applies_when.none.every(
+            (signal) =>
+              !names.has(signal),
+          ) &&
+          rule.applies_when.all.every(
+            (signal) =>
+              names.has(signal),
+          ) &&
+          (
+            rule.applies_when.any.length ===
+              0 ||
+            rule.applies_when.any.some(
+              (signal) =>
+                names.has(signal),
+            )
+          )
+        )
+      })
+
+    const selectedIds = new Set(
+      result.selected.map(
+        (rule) => rule.id,
+      ),
+    )
+
+    for (const rule of mustApplicable) {
+      expect(
+        selectedIds.has(rule.id),
+      ).toBe(true)
+    }
+
     expect(
-      result.estimatedTokens,
-    ).toBeLessThanOrEqual(50)
+      result.budgetExceededByMust,
+    ).toBe(true)
+  })
+
+  it('reports optional rules omitted by the budget', async () => {
+    const rules =
+      await loadRulesDirectory(
+        rulesDirectory,
+      )
+
+    const signals =
+      detectSignals({
+        prompt:
+          'Build a form that saves data',
+      })
+
+    const result = selectRules({
+      rules,
+      signals,
+      maxTokens: 100,
+    })
+
+    expect(
+      result.omittedDueToBudget.length,
+    ).toBeGreaterThan(0)
   })
 })
