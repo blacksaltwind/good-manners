@@ -8,3 +8,6 @@ coverage
 !.env.example
 
 packages/skill/dist
+
+packages/cli/dist
+packages/cli/*.tgz

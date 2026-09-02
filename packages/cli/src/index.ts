@@ -27,16 +27,10 @@ const packageRoot = path.resolve(
   '..',
 )
 
-const repoRoot = path.resolve(
-  packageRoot,
-  '../..',
-)
-
 const skillSource = path.join(
-  repoRoot,
-  'packages',
-  'skill',
+  packageRoot,
   'dist',
+  'skill',
   'good-manners',
 )
 
