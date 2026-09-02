@@ -6,7 +6,6 @@ import {
 
 import {
   selectRules,
-  type SelectedRule,
 } from './select-rules.js'
 
 import {
@@ -17,24 +16,14 @@ export type BuildContextInput = {
   rules: Rule[]
   prompt?: string
   source?: string[]
-  maxTokens?: number
-}
-
-function ruleTokenTotal(
-  rules: SelectedRule[],
-): number {
-  return rules.reduce(
-    (total, rule) =>
-      total + rule.estimatedTokens,
-    0,
-  )
+  maxCharacters?: number
 }
 
 export function buildContext({
   rules,
   prompt,
   source,
-  maxTokens = 1200,
+  maxCharacters = 4800,
 }: BuildContextInput) {
   const signals = detectSignals({
     prompt,
@@ -44,42 +33,34 @@ export function buildContext({
   const selection = selectRules({
     rules,
     signals,
-    maxTokens,
+    maxCharacters,
   })
 
   const selected = [
     ...selection.selected,
   ]
 
-  const additionallyOmitted: string[] = []
+  const additionallyOmitted: string[] =
+    []
 
   let context = renderContext({
     signals,
     rules: selected,
   })
 
-  /*
-   * selectRules budgets the rules themselves.
-   *
-   * The final rendered packet also contains:
-   * - headers
-   * - signal names
-   * - severity headings
-   * - Good Manners instructions
-   *
-   * If those push the final packet over budget,
-   * remove the lowest-priority optional rule
-   * until the complete context fits.
-   *
-   * MUST rules are never removed.
-   */
+  // The selector budgets rule text, but the final
+  // packet also contains headers and instructions.
+  // Remove lowest-priority optional rules until the
+  // actual rendered character count fits.
   while (
-    context.estimatedTokens > maxTokens
+    context.characterCount >
+    maxCharacters
   ) {
     let removableIndex = -1
 
     for (
-      let index = selected.length - 1;
+      let index =
+        selected.length - 1;
       index >= 0;
       index -= 1
     ) {
@@ -96,10 +77,11 @@ export function buildContext({
       break
     }
 
-    const [removed] = selected.splice(
-      removableIndex,
-      1,
-    )
+    const [removed] =
+      selected.splice(
+        removableIndex,
+        1,
+      )
 
     additionallyOmitted.push(
       removed.id,
@@ -110,13 +92,6 @@ export function buildContext({
       rules: selected,
     })
   }
-
-  const contextBudgetExceededByMust =
-    context.estimatedTokens > maxTokens &&
-    selected.every(
-      (rule) =>
-        rule.severity === 'must',
-    )
 
   return {
     signals,
@@ -130,16 +105,20 @@ export function buildContext({
       ]),
     ],
 
-    estimatedTokens:
-      ruleTokenTotal(selected),
-
-    budgetExceededByMust:
-      selection.budgetExceededByMust ||
-      contextBudgetExceededByMust,
-
     context: context.text,
 
-    contextTokens:
+    contextCharacters:
+      context.characterCount,
+
+    contextEstimatedTokens:
       context.estimatedTokens,
+
+    budgetExceededByMust:
+      context.characterCount >
+        maxCharacters &&
+      selected.every(
+        (rule) =>
+          rule.severity === 'must',
+      ),
   }
 }

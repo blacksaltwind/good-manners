@@ -39,9 +39,9 @@ describe('Good Manners selector evals', async () => {
         rules,
         prompt: evalCase.prompt,
         source: evalCase.source,
-        maxTokens:
-          evalCase.maxContextTokens ??
-          1200,
+        maxCharacters:
+          evalCase.maxContextCharacters ??
+          4800,
       })
 
       const signals = new Set(
@@ -87,10 +87,10 @@ describe('Good Manners selector evals', async () => {
       }
 
       expect(
-        result.contextTokens,
+        result.contextCharacters,
       ).toBeLessThanOrEqual(
-        evalCase.maxContextTokens ??
-          1200,
+        evalCase.maxContextCharacters ??
+          4800,
       )
     })
   }

@@ -29,6 +29,7 @@ describe('renderContext', () => {
           instruction:
             'Preserve valid user input after recoverable failures.',
           score: 145,
+          characterCount: 80,
           estimatedTokens: 20,
           matchedSignals: ['form', 'mutation'],
         },
@@ -39,6 +40,7 @@ describe('renderContext', () => {
           instruction:
             'Avoid competing primary actions.',
           score: 30,
+          characterCount: 48,
           estimatedTokens: 12,
           matchedSignals: [],
         },

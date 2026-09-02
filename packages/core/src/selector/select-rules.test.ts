@@ -77,13 +77,13 @@ describe('selectRules', () => {
     const result = selectRules({
       rules,
       signals,
-      maxTokens: 50,
+      maxCharacters: 200,
     })
 
     if (result.budgetExceededByMust) {
       expect(
         result.estimatedTokens,
-      ).toBeGreaterThan(50)
+      ).toBeGreaterThan(200)
 
       expect(
         result.selected.every(
@@ -94,7 +94,7 @@ describe('selectRules', () => {
     } else {
       expect(
         result.estimatedTokens,
-      ).toBeLessThanOrEqual(50)
+      ).toBeLessThanOrEqual(200)
     }
   })
 })
@@ -115,7 +115,7 @@ describe('selector priority guarantees', () => {
     const result = selectRules({
       rules,
       signals,
-      maxTokens: 1,
+      maxCharacters: 1,
     })
 
     const mustApplicable = rules
@@ -182,7 +182,7 @@ describe('selector priority guarantees', () => {
     const result = selectRules({
       rules,
       signals,
-      maxTokens: 100,
+      maxCharacters: 400,
     })
 
     expect(

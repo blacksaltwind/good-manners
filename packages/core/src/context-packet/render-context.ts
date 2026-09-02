@@ -9,6 +9,7 @@ export type RenderContextInput = {
 
 export type RenderContextResult = {
   text: string
+  characterCount: number
   estimatedTokens: number
 }
 
@@ -69,6 +70,7 @@ export function renderContext({
 
   return {
     text,
+    characterCount: text.length,
     estimatedTokens: estimateTokens(text),
   }
 }

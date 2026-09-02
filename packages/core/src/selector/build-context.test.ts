@@ -29,7 +29,7 @@ const rulesDirectory =
   )
 
 describe('buildContext', () => {
-  it('keeps the final rendered packet within budget', async () => {
+  it('keeps the final rendered packet within the character budget', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -39,12 +39,12 @@ describe('buildContext', () => {
       rules,
       prompt:
         'Build a form that saves profile changes.',
-      maxTokens: 1200,
+      maxCharacters: 4800,
     })
 
     expect(
-      result.contextTokens,
-    ).toBeLessThanOrEqual(1200)
+      result.contextCharacters,
+    ).toBeLessThanOrEqual(4800)
   })
 
   it('drops optional rules before MUST rules', async () => {
@@ -57,12 +57,12 @@ describe('buildContext', () => {
       rules,
       prompt:
         'Build a login form with email and password.',
-      maxTokens: 1200,
+      maxCharacters: 4800,
     })
 
     expect(
-      result.contextTokens,
-    ).toBeLessThanOrEqual(1200)
+      result.contextCharacters,
+    ).toBeLessThanOrEqual(4800)
 
     expect(
       result.selected.some(
@@ -72,7 +72,7 @@ describe('buildContext', () => {
     ).toBe(true)
   })
 
-  it('reports overflow when MUST rules alone exceed the budget', async () => {
+  it('reports overflow when MUST rules alone exceed the character budget', async () => {
     const rules =
       await loadRulesDirectory(
         rulesDirectory,
@@ -82,7 +82,7 @@ describe('buildContext', () => {
       rules,
       prompt:
         'Build a form that saves profile changes.',
-      maxTokens: 10,
+      maxCharacters: 40,
     })
 
     expect(
@@ -90,10 +90,36 @@ describe('buildContext', () => {
     ).toBe(true)
 
     expect(
+      result.contextCharacters,
+    ).toBeGreaterThan(40)
+
+    expect(
       result.selected.every(
         (rule) =>
           rule.severity === 'must',
       ),
     ).toBe(true)
+  })
+
+  it('keeps estimated tokens informational', async () => {
+    const rules =
+      await loadRulesDirectory(
+        rulesDirectory,
+      )
+
+    const result = buildContext({
+      rules,
+      prompt:
+        'Build a profile form.',
+      maxCharacters: 4800,
+    })
+
+    expect(
+      result.contextEstimatedTokens,
+    ).toBeGreaterThan(0)
+
+    expect(
+      result.contextCharacters,
+    ).toBe(result.context.length)
   })
 })

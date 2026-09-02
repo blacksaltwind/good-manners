@@ -12,5 +12,5 @@ export type SelectorEvalCase = {
     mustNotInclude?: string[]
   }
 
-  maxContextTokens?: number
+  maxContextCharacters?: number
 }

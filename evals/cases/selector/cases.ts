@@ -21,7 +21,7 @@ export const selectorEvalCases: SelectorEvalCase[] = [
       ],
     },
 
-    maxContextTokens: 1200,
+    maxContextCharacters: 4800,
   },
 
   {
@@ -46,7 +46,7 @@ export const selectorEvalCases: SelectorEvalCase[] = [
       ],
     },
 
-    maxContextTokens: 1200,
+    maxContextCharacters: 4800,
   },
 
   {
@@ -66,7 +66,7 @@ export const selectorEvalCases: SelectorEvalCase[] = [
       ],
     },
 
-    maxContextTokens: 1200,
+    maxContextCharacters: 4800,
   },
 
   {
@@ -99,7 +99,7 @@ export const selectorEvalCases: SelectorEvalCase[] = [
       ],
     },
 
-    maxContextTokens: 1200,
+    maxContextCharacters: 4800,
   },
 
   {
@@ -119,6 +119,6 @@ export const selectorEvalCases: SelectorEvalCase[] = [
       ],
     },
 
-    maxContextTokens: 1200,
+    maxContextCharacters: 4800,
   },
 ]
