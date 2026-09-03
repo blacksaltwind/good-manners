@@ -1,6 +1,6 @@
 {
   "name": "good-manners",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Human-first UX guardrails for AI coding agents.",
   "type": "module",
   "license": "MIT",
