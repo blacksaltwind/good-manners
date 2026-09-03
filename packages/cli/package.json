@@ -24,5 +24,27 @@
   "dependencies": {},
   "devDependencies": {
     "esbuild": "^0.28.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blacksaltwind/good-manners.git"
+  },
+  "homepage": "https://github.com/blacksaltwind/good-manners#readme",
+  "bugs": {
+    "url": "https://github.com/blacksaltwind/good-manners/issues"
+  },
+  "keywords": [
+    "ux",
+    "accessibility",
+    "ai",
+    "coding-agent",
+    "claude-code",
+    "codex",
+    "hci",
+    "lint",
+    "developer-tools"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

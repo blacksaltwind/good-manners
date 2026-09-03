@@ -23,12 +23,14 @@ npx good-manners check src
 npx good-manners rules
 npx good-manners rules form
 npx good-manners rules "preserve input"
+npx good-manners eval
+npx good-manners eval --json
 npx good-manners --dry-run
 npx good-manners --help
 npx good-manners --version
 ```
 
-`check` is deterministic and local. `rules` searches the bundled canonical Good Manners rule catalog without an LLM or network request.
+`check` is deterministic and local. `rules` searches the bundled canonical Good Manners rule catalog without an LLM or network request. `eval` runs the bundled Good Manners quality-gate suite; use `--json` for machine-readable output.
 
 ## Final review
 
