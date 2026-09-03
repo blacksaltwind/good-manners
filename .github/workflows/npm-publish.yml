@@ -1,0 +1,69 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Test and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Update npm
+        run: npm install --global npm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify release version
+        shell: bash
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+
+          echo "Package version: $PACKAGE_VERSION"
+          echo "Release version: $RELEASE_VERSION"
+
+          if [ "$PACKAGE_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "ERROR: Release tag does not match packages/cli/package.json"
+            echo "Expected: v$PACKAGE_VERSION"
+            echo "Received: $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build Good Manners
+        run: pnpm --dir packages/cli build
+
+      - name: Run Good Manners eval
+        run: node packages/cli/dist/index.js eval
+
+      - name: Publish to npm
+        working-directory: packages/cli
+        run: npm publish --access public
