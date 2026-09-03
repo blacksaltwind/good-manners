@@ -71,23 +71,23 @@ describe('Good Manners eval command', () => {
       formatEvalReport(report)
 
     expect(output).toContain(
-      'Good Manners Eval',
+      'Good Manners / eval',
     )
 
     expect(output).toContain(
-      'Selector cases',
+      'Selector',
     )
 
     expect(output).toContain(
-      'Behavior cases',
+      'Behavior',
     )
 
     expect(output).toContain(
-      'Total cases',
+      '40 / 40 scenarios passed',
     )
 
     expect(output).toContain(
-      'Expected-rule recall',
+      'Rule recall',
     )
 
     expect(output).toContain('PASS')

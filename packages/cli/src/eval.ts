@@ -24,6 +24,17 @@ import {
   bundledRulesPath,
 } from './rules.js'
 
+import {
+  bold,
+  failure,
+  header,
+  muted,
+  row,
+  success,
+  successTone,
+  warningTone,
+} from './terminal.js'
+
 export type EvalCaseResult = {
   suite: 'selector' | 'stress' | 'behavior'
   id: string
@@ -453,15 +464,14 @@ export async function runGoodMannersEval(
   }
 }
 
-function metricLine(
-  label: string,
+function metricValue(
   metricValue: EvalMetric,
-  suffix = '%',
 ) {
   return [
-    label.padEnd(28),
-    `${metricValue.value.toFixed(1)}${suffix}`,
-    `(${metricValue.numerator}/${metricValue.denominator})`,
+    `${metricValue.value.toFixed(1)}%`,
+    muted(
+      `(${metricValue.numerator}/${metricValue.denominator})`,
+    ),
   ].join(' ')
 }
 
@@ -469,35 +479,99 @@ export function formatEvalReport(
   report: GoodMannersEvalReport,
 ) {
   const lines = [
-    'Good Manners Eval',
+    header('eval'),
     '',
-    `Selector cases`.padEnd(28) +
-      ` ${report.cases.selector.passed}/${report.cases.selector.total}`,
-    `Stress cases`.padEnd(28) +
-      ` ${report.cases.stress.passed}/${report.cases.stress.total}`,
-    `Behavior cases`.padEnd(28) +
-      ` ${report.cases.behavior.passed}/${report.cases.behavior.total}`,
-    `Total cases`.padEnd(28) +
-      ` ${report.cases.passed}/${report.cases.total}`,
+    report.passed
+      ? success(
+          `${report.cases.passed} / ${report.cases.total} scenarios passed`,
+        )
+      : failure(
+          `${report.cases.passed} / ${report.cases.total} scenarios passed`,
+        ),
     '',
-    metricLine(
-      'Expected-rule recall',
-      report.metrics.expectedRuleRecall,
+    row(
+      'Selector',
+      `${report.cases.selector.passed} / ${report.cases.selector.total}`,
     ),
-    metricLine(
-      'Excluded-rule leakage',
-      report.metrics.excludedRuleLeakage,
+    row(
+      'Stress',
+      `${report.cases.stress.passed} / ${report.cases.stress.total}`,
     ),
-    metricLine(
-      'Expected-signal recall',
-      report.metrics.expectedSignalRecall,
+    row(
+      'Behavior',
+      `${report.cases.behavior.passed} / ${report.cases.behavior.total}`,
     ),
-    metricLine(
-      'Non-UI false activation',
-      report.metrics.nonUiFalseActivation,
+    '',
+    row(
+      'Rule recall',
+      report.gates.expectedRuleRecall
+        ? successTone(
+            metricValue(
+              report.metrics.expectedRuleRecall,
+            ),
+          )
+        : warningTone(
+            metricValue(
+              report.metrics.expectedRuleRecall,
+            ),
+          ),
     ),
-    'Context budget violations'.padEnd(28) +
-      ` ${report.metrics.contextBudgetViolations}`,
+    row(
+      'Rule leakage',
+      report.gates.excludedRuleLeakage
+        ? successTone(
+            metricValue(
+              report.metrics.excludedRuleLeakage,
+            ),
+          )
+        : warningTone(
+            metricValue(
+              report.metrics.excludedRuleLeakage,
+            ),
+          ),
+    ),
+    row(
+      'Signal recall',
+      report.gates.expectedSignalRecall
+        ? successTone(
+            metricValue(
+              report.metrics.expectedSignalRecall,
+            ),
+          )
+        : warningTone(
+            metricValue(
+              report.metrics.expectedSignalRecall,
+            ),
+          ),
+    ),
+    row(
+      'False activation',
+      report.gates.nonUiFalseActivation
+        ? successTone(
+            metricValue(
+              report.metrics.nonUiFalseActivation,
+            ),
+          )
+        : warningTone(
+            metricValue(
+              report.metrics.nonUiFalseActivation,
+            ),
+          ),
+    ),
+    row(
+      'Context violations',
+      report.gates.contextBudgetViolations
+        ? successTone(
+            String(
+              report.metrics.contextBudgetViolations,
+            ),
+          )
+        : warningTone(
+            String(
+              report.metrics.contextBudgetViolations,
+            ),
+          ),
+    ),
   ]
 
   const failures =
@@ -507,21 +581,31 @@ export function formatEvalReport(
 
   if (failures.length > 0) {
     lines.push('')
-    lines.push('Failures:')
+    lines.push(bold('Failures'))
 
-    for (const failure of failures) {
+    for (const failedCase of failures) {
       lines.push(
-        `- ${failure.suite}/${failure.id}: ` +
-        failure.failures.join('; '),
+        failure(
+          `${failedCase.suite}/${failedCase.id}`,
+        ),
       )
+
+      for (
+        const message of
+        failedCase.failures
+      ) {
+        lines.push(
+          `  ${muted(message)}`,
+        )
+      }
     }
   }
 
   lines.push('')
   lines.push(
     report.passed
-      ? 'PASS'
-      : 'FAIL',
+      ? success(bold('PASS'))
+      : failure(bold('FAIL')),
   )
 
   return lines.join('\n')
