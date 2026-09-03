@@ -5,7 +5,7 @@
   "description": "Good Manners - human-first UX guardrails for AI-generated interfaces",
   "license": "MIT",
   "scripts": {
-    "test": "vitest run --passWithNoTests",
+    "test": "pnpm --filter @good-manners/skill build && vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "format": "prettier --write .",
