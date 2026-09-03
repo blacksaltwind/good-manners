@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
-import {
-  fileURLToPath,
-} from 'node:url'
+import { fileURLToPath } from 'node:url'
+
+import { bold, command, header, muted, row, severity } from './terminal.js'
 
 export type BundledRule = {
   id: string
@@ -17,46 +17,24 @@ type RulesDocument = {
   rules: BundledRule[]
 }
 
-function normalize(
-  value: string,
-) {
+function normalize(value: string) {
   return value
     .toLowerCase()
-    .replace(
-      /[^a-z0-9.-]+/g,
-      ' ',
-    )
+    .replace(/[^a-z0-9.-]+/g, ' ')
     .trim()
 }
 
-export async function loadBundledRules(
-  rulesPath: string,
-): Promise<BundledRule[]> {
-  const parsed = JSON.parse(
-    await fs.readFile(
-      rulesPath,
-      'utf8',
-    ),
-  ) as Partial<RulesDocument>
+export async function loadBundledRules(rulesPath: string): Promise<BundledRule[]> {
+  const parsed = JSON.parse(await fs.readFile(rulesPath, 'utf8')) as Partial<RulesDocument>
 
-  if (
-    parsed.schema_version !== 1 ||
-    !Array.isArray(parsed.rules)
-  ) {
-    throw new Error(
-      'Invalid bundled Good Manners rule catalog.',
-    )
+  if (parsed.schema_version !== 1 || !Array.isArray(parsed.rules)) {
+    throw new Error('Invalid bundled Good Manners rule catalog.')
   }
 
-  return [...parsed.rules].sort(
-    (a, b) => a.id.localeCompare(b.id),
-  )
+  return [...parsed.rules].sort((a, b) => a.id.localeCompare(b.id))
 }
 
-function scoreRule(
-  rule: BundledRule,
-  query: string,
-) {
+function scoreRule(rule: BundledRule, query: string) {
   const normalizedQuery = normalize(query)
 
   if (!normalizedQuery) {
@@ -106,43 +84,22 @@ function scoreRule(
     ].join(' '),
   )
 
-  const tokens = normalizedQuery
-    .split(/\s+/)
-    .filter(
-      (token) => token.length > 1,
-    )
+  const tokens = normalizedQuery.split(/\s+/).filter((token) => token.length > 1)
 
-  if (
-    tokens.length > 0 &&
-    tokens.every(
-      (token) => candidate.includes(token),
-    )
-  ) {
+  if (tokens.length > 0 && tokens.every((token) => candidate.includes(token))) {
     score += 50 + tokens.length
   }
 
   return score
 }
 
-export function searchRules(
-  rules: BundledRule[],
-  query: string,
-  limit = 20,
-): BundledRule[] {
+export function searchRules(rules: BundledRule[], query: string, limit = 20): BundledRule[] {
   const normalizedQuery = normalize(query)
 
-  const exactCategory = rules.some(
-    (rule) =>
-      normalize(rule.category) ===
-      normalizedQuery,
-  )
+  const exactCategory = rules.some((rule) => normalize(rule.category) === normalizedQuery)
 
   const candidates = exactCategory
-    ? rules.filter(
-        (rule) =>
-          normalize(rule.category) ===
-          normalizedQuery,
-      )
+    ? rules.filter((rule) => normalize(rule.category) === normalizedQuery)
     : rules
 
   return candidates
@@ -150,94 +107,65 @@ export function searchRules(
       rule,
       score: scoreRule(rule, query),
     }))
-    .filter(
-      (result) => result.score > 0,
-    )
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        a.rule.id.localeCompare(b.rule.id),
-    )
+    .filter((result) => result.score > 0)
+    .sort((a, b) => b.score - a.score || a.rule.id.localeCompare(b.rule.id))
     .slice(0, limit)
     .map((result) => result.rule)
 }
 
-function formatRule(
-  rule: BundledRule,
-) {
+function formatRule(rule: BundledRule) {
   return [
-    `${rule.id} ${rule.severity.toUpperCase()}`,
-    `  ${rule.title}`,
-    `  ${rule.instruction}`,
+    `${command(rule.id)} ${severity(rule.severity)}`,
+    `  ${bold(rule.title)}`,
+    `  ${muted(rule.instruction)}`,
   ].join('\n')
 }
 
-export function formatRuleSummary(
-  rules: BundledRule[],
-) {
+export function formatRuleSummary(rules: BundledRule[]) {
   const counts = new Map<string, number>()
 
   for (const rule of rules) {
-    counts.set(
-      rule.category,
-      (counts.get(rule.category) ?? 0) + 1,
-    )
+    counts.set(rule.category, (counts.get(rule.category) ?? 0) + 1)
   }
 
   const lines = [
-    `Good Manners rules: ${rules.length}`,
+    header('rules'),
     '',
-    'Categories:',
+    `${bold(String(rules.length))} UX rules`,
+    '',
+    bold('Categories'),
   ]
 
-  for (
-    const [category, count] of
-    [...counts.entries()].sort(
-      (a, b) => a[0].localeCompare(b[0]),
-    )
-  ) {
-    lines.push(`- ${category}: ${count}`)
+  for (const [category, count] of [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    lines.push(row(category, String(count), 20))
   }
 
   lines.push('')
-  lines.push(
-    'Use: good-manners rules [query]',
-  )
+  lines.push(muted('Search: good-manners rules [query]'))
 
   return lines.join('\n')
 }
 
-export function formatRuleSearch(
-  rules: BundledRule[],
-  query: string,
-) {
+export function formatRuleSearch(rules: BundledRule[], query: string) {
   if (rules.length === 0) {
-    return `No Good Manners rules matched "${query}".`
+    return [header('rules'), '', muted(`No Good Manners rules matched "${query}".`)].join('\n')
   }
 
   return [
-    `Good Manners rules matching "${query}":`,
+    header('rules'),
+    '',
+    `${bold(String(rules.length))} match${rules.length === 1 ? '' : 'es'} for "${query}"`,
     '',
     ...rules.map(formatRule),
   ].join('\n\n')
 }
 
 export function bundledRulesPath() {
-  return fileURLToPath(
-    new URL(
-      './skill/good-manners/rules.json',
-      import.meta.url,
-    ),
-  )
+  return fileURLToPath(new URL('./skill/good-manners/rules.json', import.meta.url))
 }
 
-export async function getRulesOutput(
-  query?: string,
-) {
-  const rules =
-    await loadBundledRules(
-      bundledRulesPath(),
-    )
+export async function getRulesOutput(query?: string) {
+  const rules = await loadBundledRules(bundledRulesPath())
 
   const trimmed = query?.trim()
 
@@ -245,11 +173,5 @@ export async function getRulesOutput(
     return formatRuleSummary(rules)
   }
 
-  return formatRuleSearch(
-    searchRules(
-      rules,
-      trimmed,
-    ),
-    trimmed,
-  )
+  return formatRuleSearch(searchRules(rules, trimmed), trimmed)
 }
