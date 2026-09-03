@@ -13,7 +13,6 @@ tags:
 applies_when:
   any:
     - session
-    - authentication
   all: []
   none: []
 checks:

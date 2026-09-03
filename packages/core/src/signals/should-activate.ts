@@ -15,6 +15,7 @@ const UI_SIGNALS = new Set([
   'upload',
   'destructive',
   'touch',
+  'motion',
   'image',
   'icon',
   'settings',

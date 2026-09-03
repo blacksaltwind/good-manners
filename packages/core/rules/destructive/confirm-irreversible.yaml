@@ -10,9 +10,10 @@ tags:
   - confirm
   - irreversible
 applies_when:
-  any:
+  any: []
+  all:
     - destructive
-  all: []
+    - irreversible
   none: []
 checks:
   deterministic: []

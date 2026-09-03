@@ -16,7 +16,7 @@ const rulesPath = path.resolve(
 )
 
 describe('Good Manners eval command', () => {
-  it('runs the existing selector and stress suites', async () => {
+  it('runs all 40 selector, stress, and behavior scenarios', async () => {
     const report =
       await runGoodMannersEval(
         rulesPath,
@@ -31,8 +31,20 @@ describe('Good Manners eval command', () => {
     ).toBe(10)
 
     expect(
+      report.cases.behavior.total,
+    ).toBe(25)
+
+    expect(
+      report.cases.behavior.passed,
+    ).toBe(25)
+
+    expect(
       report.cases.total,
-    ).toBe(15)
+    ).toBe(40)
+
+    expect(
+      report.cases.passed,
+    ).toBe(40)
 
     expect(
       report.metrics.expectedRuleRecall.value,
@@ -64,6 +76,14 @@ describe('Good Manners eval command', () => {
 
     expect(output).toContain(
       'Selector cases',
+    )
+
+    expect(output).toContain(
+      'Behavior cases',
+    )
+
+    expect(output).toContain(
+      'Total cases',
     )
 
     expect(output).toContain(

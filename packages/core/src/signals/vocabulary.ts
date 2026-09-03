@@ -6,6 +6,7 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
     /\bpage\b/i,
     /\bcomponent\b/i,
     /\bdashboard\b/i,
+    /\beditor\b/i,
     /\bform\b/i,
     /\bbutton\b/i,
     /<[a-z]/i,
@@ -13,7 +14,8 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
 
   interactive: [
     /\bbutton\b/i,
-    /\bclick\b/i,
+    /\bclick(?:s|ed|ing)?\b/i,
+    /\binteraction\b/i,
     /\binteractive\b/i,
     /\bcontrol\b/i,
     /\bmenu\b/i,
@@ -246,7 +248,7 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
   ],
 
   image: [
-    /\bimage\b/i,
+    /\bimages?\b/i,
     /\bphoto\b/i,
     /\bavatar\b/i,
     /<img\b/i,
@@ -258,10 +260,12 @@ export const SIGNAL_PATTERNS: Record<string, RegExp[]> = {
   ],
 
   timed: [
+    /\btimed\b/i,
     /\btimeout\b/i,
     /\btime limit\b/i,
     /\bexpires in\b/i,
     /\bcountdown\b/i,
+    /\bextend(?: the)? time\b/i,
   ],
 
   settings: [

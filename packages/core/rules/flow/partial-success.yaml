@@ -16,7 +16,6 @@ applies_when:
   any:
     - partial
     - bulk
-    - upload
   all: []
   none: []
 checks:

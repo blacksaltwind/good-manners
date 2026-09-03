@@ -17,11 +17,15 @@ import {
 } from '../../../evals/cases/stress/cases.js'
 
 import {
+  behaviorEvalCases,
+} from '../../../evals/cases/behavior/cases.js'
+
+import {
   bundledRulesPath,
 } from './rules.js'
 
 export type EvalCaseResult = {
-  suite: 'selector' | 'stress'
+  suite: 'selector' | 'stress' | 'behavior'
   id: string
   passed: boolean
   failures: string[]
@@ -44,6 +48,10 @@ export type GoodMannersEvalReport = {
       total: number
     }
     stress: {
+      passed: number
+      total: number
+    }
+    behavior: {
       passed: number
       total: number
     }
@@ -143,7 +151,17 @@ export async function runGoodMannersEval(
 
   let contextBudgetViolations = 0
 
-  for (const evalCase of selectorEvalCases) {
+  for (const suite of [
+    {
+      name: 'selector' as const,
+      cases: selectorEvalCases,
+    },
+    {
+      name: 'behavior' as const,
+      cases: behaviorEvalCases,
+    },
+  ]) {
+    for (const evalCase of suite.cases) {
     const result = buildContext({
       rules,
       prompt: evalCase.prompt,
@@ -226,12 +244,13 @@ export async function runGoodMannersEval(
       )
     }
 
-    results.push({
-      suite: 'selector',
-      id: evalCase.id,
-      passed: failures.length === 0,
-      failures,
-    })
+      results.push({
+        suite: suite.name,
+        id: evalCase.id,
+        passed: failures.length === 0,
+        failures,
+      })
+    }
   }
 
   for (const testCase of stressCases) {
@@ -333,6 +352,12 @@ export async function runGoodMannersEval(
         result.suite === 'stress',
     )
 
+  const behaviorResults =
+    results.filter(
+      (result) =>
+        result.suite === 'behavior',
+    )
+
   const casesPassed =
     results.filter(
       (result) => result.passed,
@@ -412,6 +437,14 @@ export async function runGoodMannersEval(
           ).length,
         total: stressResults.length,
       },
+
+      behavior: {
+        passed:
+          behaviorResults.filter(
+            (result) => result.passed,
+          ).length,
+        total: behaviorResults.length,
+      },
     },
 
     metrics,
@@ -442,6 +475,10 @@ export function formatEvalReport(
       ` ${report.cases.selector.passed}/${report.cases.selector.total}`,
     `Stress cases`.padEnd(28) +
       ` ${report.cases.stress.passed}/${report.cases.stress.total}`,
+    `Behavior cases`.padEnd(28) +
+      ` ${report.cases.behavior.passed}/${report.cases.behavior.total}`,
+    `Total cases`.padEnd(28) +
+      ` ${report.cases.passed}/${report.cases.total}`,
     '',
     metricLine(
       'Expected-rule recall',
